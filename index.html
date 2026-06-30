@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tekila Tours — Cancún</title>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:     #12192C;
+      --navy-mid: #1E2D4A;
+      --gold:     #D4AB3B;
+      --gold-dim: #A8852C;
+      --teal:     #1CBFC0;
+      --teal-dim: #169898;
+      --coral:    #E05A2B;
+      --sand:     #FAFAF6;
+      --sand-dim: #F0EDE4;
+      --text:     #1A1A2E;
+      --muted:    #6B7280;
+      --white:    #FFFFFF;
+
+      --font-display: 'Oswald', 'Impact', sans-serif;
+      --font-body:    'Nunito', 'Segoe UI', sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--sand);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    /* ─── HEADER ─── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--navy);
+      border-bottom: 2px solid var(--gold);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+    }
+
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+    }
+
+    .header-logo img {
+      height: 48px;
+      width: 48px;
+      object-fit: contain;
+      border-radius: 50%;
+      background: white;
+    }
+
+    .header-logo span {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 0.06em;
+    }
+
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    nav a {
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--white);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    nav a:hover { color: var(--gold); }
+
+    .lang-toggle {
+      display: flex;
+      background: var(--navy-mid);
+      border-radius: 999px;
+      padding: 3px;
+      gap: 2px;
+      border: 1px solid var(--gold-dim);
+    }
+
+    .lang-btn {
+      font-family: var(--font-display);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 4px 12px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      background: transparent;
+      color: var(--muted);
+      transition: all 0.2s;
+    }
+
+    .lang-btn.active {
+      background: var(--gold);
+      color: var(--navy);
+    }
+
+    /* ─── HERO ─── */
+    #hero {
+      background: var(--navy);
+      position: relative;
+      min-height: 92vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 4rem 2rem;
+      overflow: hidden;
+    }
+
+    /* Diagonal stripe texture */
+    #hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 40px,
+        rgba(212, 171, 59, 0.04) 40px,
+        rgba(212, 171, 59, 0.04) 41px
+      );
+      pointer-events: none;
+    }
+
+    /* Turquoise glow bottom */
+    #hero::after {
+      content: '';
+      position: absolute;
+      bottom: -80px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 300px;
+      background: radial-gradient(ellipse, rgba(28,191,192,0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-logo {
+      width: 160px;
+      height: 160px;
+      object-fit: contain;
+      border-radius: 50%;
+      border: 3px solid var(--gold);
+      box-shadow: 0 0 40px rgba(212,171,59,0.3), 0 0 80px rgba(28,191,192,0.15);
+      margin-bottom: 2rem;
+      position: relative;
+      z-index: 1;
+      background: white;
+    }
+
+    .hero-eyebrow {
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--teal);
+      margin-bottom: 0.75rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(3rem, 8vw, 6rem);
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -0.01em;
+      color: var(--white);
+      text-wrap: balance;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-title span {
+      color: var(--gold);
+    }
+
+    .hero-sub {
+      font-size: 1.1rem;
+      color: rgba(255,255,255,0.65);
+      max-width: 480px;
+      margin: 1.25rem auto 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-ctas {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2.5rem;
+      position: relative;
+      z-index: 1;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .btn-primary {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.9rem 2.2rem;
+      background: var(--coral);
+      color: var(--white);
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s, transform 0.15s;
+      display: inline-block;
+    }
+
+    .btn-primary:hover {
+      background: #c44d22;
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.9rem 2.2rem;
+      background: transparent;
+      color: var(--gold);
+      border: 2px solid var(--gold);
+      border-radius: 4px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+      display: inline-block;
+    }
+
+    .btn-secondary:hover {
+      background: var(--gold);
+      color: var(--navy);
+      transform: translateY(-2px);
+    }
+
+    .hero-contact {
+      position: relative;
+      z-index: 1;
+      margin-top: 2.5rem;
+      display: flex;
+      gap: 2rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .hero-contact a {
+      color: rgba(255,255,255,0.5);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .hero-contact a:hover { color: var(--teal); }
+
+    /* ─── SECTION HEADER ─── */
+    .section-header {
+      text-align: center;
+      padding: 4.5rem 2rem 2.5rem;
+    }
+
+    .section-eyebrow {
+      font-family: var(--font-display);
+      font-size: 0.8rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--teal);
+      margin-bottom: 0.6rem;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 700;
+      color: var(--navy);
+      text-wrap: balance;
+      line-height: 1.1;
+    }
+
+    .section-title span { color: var(--gold-dim); }
+
+    .section-desc {
+      margin-top: 0.75rem;
+      color: var(--muted);
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* ─── TOURS GRID ─── */
+    #tours {
+      background: var(--sand-dim);
+      padding-bottom: 5rem;
+    }
+
+    .tours-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    .tour-card {
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+      aspect-ratio: 16/11;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(18,25,44,0.15);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .tour-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 12px 40px rgba(18,25,44,0.25);
+    }
+
+    .tour-card-bg {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center top;
+      transition: transform 0.5s;
+    }
+
+    .tour-card:hover .tour-card-bg {
+      transform: scale(1.05);
+    }
+
+    /* Base overlay — always visible info */
+    .tour-card-base {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(18,25,44,0.95) 0%, rgba(18,25,44,0.5) 45%, transparent 70%);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 1.5rem;
+      transition: opacity 0.3s;
+    }
+
+    .tour-card:hover .tour-card-base {
+      opacity: 0;
+    }
+
+    .tour-tag {
+      font-family: var(--font-display);
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--teal);
+      margin-bottom: 0.4rem;
+    }
+
+    .tour-name {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--white);
+      line-height: 1.15;
+      text-wrap: balance;
+    }
+
+    /* Hover overlay — details + CTA */
+    .tour-card-hover {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(18,25,44,0.97) 0%, rgba(28,60,80,0.95) 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 2rem;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.3s, transform 0.3s;
+    }
+
+    .tour-card:hover .tour-card-hover {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .tour-card-hover .tour-tag { color: var(--teal); margin-bottom: 0.5rem; }
+    .tour-card-hover .tour-name { color: var(--gold); font-size: 1.2rem; margin-bottom: 0.75rem; }
+
+    .tour-desc {
+      font-size: 0.875rem;
+      color: rgba(255,255,255,0.8);
+      line-height: 1.55;
+      margin-bottom: 1.5rem;
+    }
+
+    .btn-book {
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.65rem 1.5rem;
+      background: var(--coral);
+      color: var(--white);
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+
+    .btn-book:hover { background: #c44d22; }
+
+    /* ─── RESERVATION SECTION ─── */
+    #reserva {
+      background: var(--navy);
+      padding: 5rem 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #reserva::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 60px,
+        rgba(212,171,59,0.03) 60px,
+        rgba(212,171,59,0.03) 61px
+      );
+      pointer-events: none;
+    }
+
+    #reserva .section-eyebrow { color: var(--teal); }
+    #reserva .section-title { color: var(--white); }
+    #reserva .section-title span { color: var(--gold); }
+    #reserva .section-desc { color: rgba(255,255,255,0.5); }
+
+    .form-wrap {
+      max-width: 680px;
+      margin: 2.5rem auto 0;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(212,171,59,0.2);
+      border-radius: 12px;
+      padding: 2.5rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .form-field.full { grid-column: 1 / -1; }
+
+    label {
+      font-family: var(--font-display);
+      font-size: 0.75rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+    }
+
+    input, select, textarea {
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      padding: 0.75rem 1rem;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 6px;
+      color: var(--white);
+      transition: border-color 0.2s, background 0.2s;
+      outline: none;
+    }
+
+    input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.25); }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--teal);
+      background: rgba(28,191,192,0.07);
+    }
+
+    select option { background: var(--navy-mid); color: var(--white); }
+
+    textarea { resize: vertical; min-height: 100px; }
+
+    .form-submit {
+      margin-top: 1.75rem;
+      text-align: center;
+    }
+
+    .btn-submit {
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 1rem 3rem;
+      background: var(--coral);
+      color: var(--white);
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+    }
+
+    .btn-submit:hover {
+      background: #c44d22;
+      transform: translateY(-2px);
+    }
+
+    .form-note {
+      margin-top: 1rem;
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.3);
+      text-align: center;
+    }
+
+    /* Success message */
+    .form-success {
+      display: none;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .form-success .check {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .form-success h3 {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      color: var(--teal);
+      margin-bottom: 0.5rem;
+    }
+
+    .form-success p { color: rgba(255,255,255,0.6); font-size: 0.95rem; }
+
+    /* ─── CONTACT BAR ─── */
+    #contacto {
+      background: var(--gold);
+      padding: 1.5rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3rem;
+      flex-wrap: wrap;
+    }
+
+    .contact-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--navy);
+      text-decoration: none;
+      letter-spacing: 0.04em;
+      transition: opacity 0.2s;
+    }
+
+    .contact-item:hover { opacity: 0.75; }
+
+    .contact-icon { font-size: 1.2rem; }
+
+    /* ─── FOOTER ─── */
+    footer {
+      background: #0C1220;
+      padding: 2rem;
+      text-align: center;
+      color: rgba(255,255,255,0.25);
+      font-size: 0.82rem;
+    }
+
+    footer strong { color: var(--gold); }
+
+    /* ─── MOBILE ─── */
+    @media (max-width: 700px) {
+      nav a { display: none; }
+      .form-grid { grid-template-columns: 1fr; }
+      .form-field.full { grid-column: 1; }
+      .hero-contact { flex-direction: column; gap: 0.75rem; align-items: center; }
+      #contacto { gap: 1.5rem; }
+    }
+
+    @media (max-width: 480px) {
+      .header-logo span { display: none; }
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── HEADER ─── -->
+<header>
+  <a href="#hero" class="header-logo">
+    <img src="Logo_Tekila_Tours.PNG" alt="Tekila Tours">
+    <span>TEKILA TOURS</span>
+  </a>
+
+  <nav>
+    <a href="#tours" data-es="Tours" data-en="Tours">Tours</a>
+    <a href="#reserva" data-es="Reservar" data-en="Book Now">Reservar</a>
+    <a href="#contacto" data-es="Contacto" data-en="Contact">Contacto</a>
+
+    <div class="lang-toggle">
+      <button class="lang-btn active" id="btn-es" onclick="setLang('es')">ES</button>
+      <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
+    </div>
+  </nav>
+</header>
+
+<!-- ─── HERO ─── -->
+<section id="hero">
+  <img src="Logo_Tekila_Tours.PNG" alt="Tekila Tours" class="hero-logo">
+
+  <p class="hero-eyebrow" data-es="Cancún, México" data-en="Cancún, Mexico">Cancún, México</p>
+
+  <h1 class="hero-title">
+    <span data-es="Vive la aventura" data-en="Live the adventure">Vive la aventura</span><br>
+    <span data-es="de Cancún" data-en="of Cancún">de Cancún</span>
+  </h1>
+
+  <p class="hero-sub" data-es="Tours a los mejores destinos de la Riviera Maya. Con Tekila Tours, cada experiencia es inolvidable." data-en="Tours to the best destinations in the Riviera Maya. With Tekila Tours, every experience is unforgettable.">
+    Tours a los mejores destinos de la Riviera Maya. Con Tekila Tours, cada experiencia es inolvidable.
+  </p>
+
+  <div class="hero-ctas">
+    <a href="#tours" class="btn-primary" data-es="Ver Tours" data-en="See Tours">Ver Tours</a>
+    <a href="#reserva" class="btn-secondary" data-es="Reservar Ahora" data-en="Book Now">Reservar Ahora</a>
+  </div>
+
+  <div class="hero-contact">
+    <a href="tel:+529982407444">
+      <span>📞</span>
+      <span>+52 998 240 7444</span>
+    </a>
+    <a href="tel:+529987431345">
+      <span>📱</span>
+      <span>+52 998 743 1345</span>
+    </a>
+    <a href="https://instagram.com/tekilatours" target="_blank" rel="noopener">
+      <span>📸</span>
+      <span>@tekilatours</span>
+    </a>
+  </div>
+</section>
+
+<!-- ─── TOURS ─── -->
+<section id="tours">
+  <div class="section-header">
+    <p class="section-eyebrow" data-es="Nuestros destinos" data-en="Our destinations">Nuestros destinos</p>
+    <h2 class="section-title" data-es="Elige tu <span>aventura</span>" data-en="Choose your <span>adventure</span>">Elige tu <span>aventura</span></h2>
+    <p class="section-desc" data-es="Cada tour incluye transporte desde Cancún. Pasa el cursor sobre cada tarjeta para ver los detalles." data-en="Every tour includes transport from Cancún. Hover each card to see the details.">
+      Cada tour incluye transporte desde Cancún. Pasa el cursor sobre cada tarjeta para ver los detalles.
+    </p>
+  </div>
+
+  <div class="tours-grid" id="tours-grid"></div>
+</section>
+
+<!-- ─── RESERVA ─── -->
+<section id="reserva">
+  <div class="section-header">
+    <p class="section-eyebrow" data-es="Reservaciones" data-en="Reservations">Reservaciones</p>
+    <h2 class="section-title" data-es="Reserva tu <span>lugar</span>" data-en="Book your <span>spot</span>">Reserva tu <span>lugar</span></h2>
+    <p class="section-desc" data-es="Llena el formulario y te contactamos en menos de 24 horas para confirmar tu tour." data-en="Fill out the form and we'll contact you within 24 hours to confirm your tour.">
+      Llena el formulario y te contactamos en menos de 24 horas para confirmar tu tour.
+    </p>
+  </div>
+
+  <div class="form-wrap">
+    <form id="reserva-form">
+      <div class="form-grid">
+        <div class="form-field">
+          <label data-es="Nombre" data-en="Name">Nombre</label>
+          <input type="text" name="nombre" required placeholder="Eduardo García">
+        </div>
+        <div class="form-field">
+          <label data-es="Teléfono / WhatsApp" data-en="Phone / WhatsApp">Teléfono / WhatsApp</label>
+          <input type="tel" name="telefono" required placeholder="+52 998 000 0000">
+        </div>
+        <div class="form-field full">
+          <label data-es="Correo electrónico" data-en="Email">Correo electrónico</label>
+          <input type="email" name="email" required placeholder="correo@ejemplo.com">
+        </div>
+        <div class="form-field full">
+          <label data-es="Tour de interés" data-en="Tour of interest">Tour de interés</label>
+          <select name="tour" id="tour-select" required>
+            <option value="" disabled selected data-es="Selecciona un tour..." data-en="Select a tour...">Selecciona un tour...</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label data-es="Fecha preferida" data-en="Preferred date">Fecha preferida</label>
+          <input type="date" name="fecha" required>
+        </div>
+        <div class="form-field">
+          <label data-es="Número de personas" data-en="Number of people">Número de personas</label>
+          <input type="number" name="personas" min="1" max="50" placeholder="2" required>
+        </div>
+        <div class="form-field full">
+          <label data-es="Comentarios (opcional)" data-en="Comments (optional)">Comentarios (opcional)</label>
+          <textarea name="comentarios" data-placeholder-es="Preguntas especiales, restricciones alimentarias, etc." data-placeholder-en="Special requests, dietary restrictions, etc." placeholder="Preguntas especiales, restricciones alimentarias, etc."></textarea>
+        </div>
+      </div>
+      <div class="form-submit">
+        <button type="submit" class="btn-submit" data-es="Enviar reservación" data-en="Send reservation">Enviar reservación</button>
+      </div>
+      <p class="form-note" data-es="Te contactaremos vía WhatsApp o correo para confirmar." data-en="We'll contact you via WhatsApp or email to confirm.">
+        Te contactaremos vía WhatsApp o correo para confirmar.
+      </p>
+    </form>
+
+    <div class="form-success" id="form-success">
+      <div class="check">✅</div>
+      <h3 data-es="¡Reservación enviada!" data-en="Reservation sent!">¡Reservación enviada!</h3>
+      <p data-es="Gracias por elegir Tekila Tours. Te contactaremos pronto para confirmar tu aventura." data-en="Thank you for choosing Tekila Tours. We'll be in touch soon to confirm your adventure.">
+        Gracias por elegir Tekila Tours. Te contactaremos pronto para confirmar tu aventura.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ─── CONTACT BAR ─── -->
+<div id="contacto">
+  <a href="tel:+529982407444" class="contact-item">
+    <span class="contact-icon">📞</span>
+    <span>+52 998 240 7444</span>
+  </a>
+  <a href="tel:+529987431345" class="contact-item">
+    <span class="contact-icon">📱</span>
+    <span>+52 998 743 1345</span>
+  </a>
+  <a href="https://instagram.com/tekilatours" target="_blank" rel="noopener" class="contact-item">
+    <span class="contact-icon">📸</span>
+    <span>@tekilatours</span>
+  </a>
+</div>
+
+<!-- ─── FOOTER ─── -->
+<footer>
+  <p>© 2025 <strong>Tekila Tours</strong> · Cancún, Quintana Roo, México · Todos los derechos reservados.</p>
+</footer>
+
+<script>
+  // ─── TOUR DATA ───
+  const tours = [
+    {
+      id: 'isla-mujeres',
+      img: 'IMG_0109.PNG',
+      es: { name: 'Isla Mujeres Pleasure', tag: 'Mar y Diversión', desc: 'Snorkel en arrecife, catamarán La Victoria, barra libre nacional, festín mexicano en buffet y club de playa VIP. ¡Sol, mar y momentos inolvidables!' },
+      en: { name: 'Isla Mujeres Pleasure', tag: 'Sea & Fun', desc: 'Reef snorkeling, La Victoria catamaran, open bar, Mexican buffet, and VIP beach club. Sun, sea, and unforgettable moments!' }
+    },
+    {
+      id: 'chichen-clasico',
+      img: 'IMG_0110.PNG',
+      es: { name: 'Chichén Itzá Clásico by Xcaret', tag: 'Historia', desc: 'Autobús de lujo, acceso completo a Chichén Itzá con guía profesional, Cenote Ikkil o Maya y Balancanche. Explora la historia con estilo.' },
+      en: { name: 'Chichén Itzá Classic by Xcaret', tag: 'History', desc: 'Luxury bus, full access to Chichén Itzá with a professional guide, Ikkil or Maya Cenote, and Balancanche. Explore history in style.' }
+    },
+    {
+      id: 'chichen-maya',
+      img: 'IMG_0111.PNG',
+      es: { name: 'Chichén Maya VIP', tag: 'Experiencia VIP', desc: 'Transporte VIP panorámico, guía bilingüe, acceso a Chichén Itzá, cenote sagrado, sabor yucateco y recorrido por Valladolid. Un viaje legendario.' },
+      en: { name: 'Chichén Maya VIP', tag: 'VIP Experience', desc: 'Panoramic VIP transport, bilingual guide, Chichén Itzá access, sacred cenote, Yucatán food, and Valladolid tour. A legendary journey.' }
+    },
+    {
+      id: 'xplor',
+      img: 'IMG_0112.PNG',
+      es: { name: 'Xplor Día', tag: 'Aventura Extrema', desc: 'Tirolesas épicas, vehículos anfibios por la selva, balsas subterráneas y hamacuatzaje. La aventura más intensa de Cancún bajo el sol.' },
+      en: { name: 'Xplor Day', tag: 'Extreme Adventure', desc: 'Epic zip-lines, amphibious vehicles through the jungle, underground rafts, and hammock splash. Cancún\'s most intense daytime adventure.' }
+    },
+    {
+      id: 'xoximilco',
+      img: 'IMG_0113.PNG',
+      es: { name: 'Xoximilco', tag: 'Cultura y Fiesta', desc: 'Noche de trajinera, cena degustación con más de 10 platillos típicos, barra libre nacional, música en vivo y animación. La fiesta más mexicana sobre el agua.' },
+      en: { name: 'Xoximilco', tag: 'Culture & Party', desc: 'Trajinera night cruise, tasting dinner with 10+ traditional dishes, open bar, live music, and entertainment. The most Mexican party on water.' }
+    },
+    {
+      id: 'xplor-fuego',
+      img: 'IMG_0115.PNG',
+      es: { name: 'Xplor Fuego', tag: 'Aventura Nocturna', desc: 'Tirolesas nocturnas, vehículos anfibios, balsas de remos y nado en río de estalactitas iluminadas. La noche más intensa en la selva.' },
+      en: { name: 'Xplor Fuego', tag: 'Night Adventure', desc: 'Night zip-lines, amphibious vehicles, rowing rafts, and swim through illuminated stalactite rivers. The most intense night in the jungle.' }
+    },
+    {
+      id: 'xenses',
+      img: 'IMG_0116.PNG',
+      es: { name: 'Xenses Xcaret', tag: 'Sensaciones', desc: 'Xensatorium, El Pueblo, vuelo de pájaro, Xpa y Lodorama. Un viaje fantástico diseñado para despertar todos tus sentidos.' },
+      en: { name: 'Xenses Xcaret', tag: 'Sensations', desc: 'Xensatorium, The Village, bird flight, Xpa, and Lodorama. A fantastic journey designed to awaken all your senses.' }
+    },
+    {
+      id: 'xelha',
+      img: 'IMG_0117.PNG',
+      es: { name: 'Xel-Há', tag: 'Agua y Naturaleza', desc: 'Comida buffet, snorkel, toboganes, bicicletas acuáticas, margaritas y flotadores. Un acuario natural para disfrutar todo el día.' },
+      en: { name: 'Xel-Há', tag: 'Water & Nature', desc: 'Buffet, snorkeling, slides, water bikes, margaritas, and floats. A natural aquarium to enjoy all day long.' }
+    },
+    {
+      id: 'xcaret-basico',
+      img: 'IMG_0118.PNG',
+      es: { name: 'Xcaret Básico', tag: 'Naturaleza', desc: 'Ríos subterráneos, playas y albercas naturales, recorrido por Xcaret, show México Espectacular y transporte incluido. Tu día a tu manera.' },
+      en: { name: 'Xcaret Basic', tag: 'Nature', desc: 'Underground rivers, natural beaches and pools, Xcaret tour, México Espectacular show, and transport included. Your day, your way.' }
+    },
+    {
+      id: 'xcaret-plus',
+      img: 'IMG_0119.PNG',
+      es: { name: 'Xcaret Plus', tag: 'Experiencia Completa', desc: 'Comida buffet premium, acceso Área Plus con equipo de snorkel incluido, +50 atracciones naturales y show México Espectacular. Una experiencia épica.' },
+      en: { name: 'Xcaret Plus', tag: 'Full Experience', desc: 'Premium buffet, Plus Area access with snorkel gear included, 50+ natural attractions, and México Espectacular show. An epic experience.' }
+    },
+  ];
+
+  // ─── LANGUAGE SYSTEM ───
+  let currentLang = 'es';
+
+  function setLang(lang) {
+    currentLang = lang;
+    document.documentElement.lang = lang;
+
+    document.getElementById('btn-es').classList.toggle('active', lang === 'es');
+    document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+
+    // Update all data-es / data-en text elements
+    document.querySelectorAll('[data-es]').forEach(el => {
+      const val = el.getAttribute('data-' + lang);
+      if (val !== null) {
+        if (el.tagName === 'INPUT' || el.tagName === 'OPTION') {
+          el.textContent = val;
+        } else {
+          el.innerHTML = val;
+        }
+      }
+    });
+
+    // Update placeholders
+    document.querySelectorAll('[data-placeholder-es]').forEach(el => {
+      el.placeholder = el.getAttribute('data-placeholder-' + lang);
+    });
+
+    // Rebuild tour cards and select in new language
+    renderTourCards();
+    renderTourSelect();
+  }
+
+  // ─── RENDER TOUR CARDS ───
+  function renderTourCards() {
+    const grid = document.getElementById('tours-grid');
+    grid.innerHTML = '';
+
+    tours.forEach(tour => {
+      const t = tour[currentLang];
+      const card = document.createElement('div');
+      card.className = 'tour-card';
+      card.innerHTML = `
+        <div class="tour-card-bg" style="background-image: url('${tour.img}')"></div>
+        <div class="tour-card-base">
+          <p class="tour-tag">${t.tag}</p>
+          <h3 class="tour-name">${t.name}</h3>
+        </div>
+        <div class="tour-card-hover">
+          <p class="tour-tag">${t.tag}</p>
+          <h3 class="tour-name">${t.name}</h3>
+          <p class="tour-desc">${t.desc}</p>
+          <a href="#reserva" class="btn-book" onclick="preselectTour('${tour.id}')">${currentLang === 'es' ? 'Reservar este tour →' : 'Book this tour →'}</a>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  // ─── RENDER TOUR SELECT ───
+  function renderTourSelect() {
+    const sel = document.getElementById('tour-select');
+    const currentValue = sel.value;
+    sel.innerHTML = `<option value="" disabled>${currentLang === 'es' ? 'Selecciona un tour...' : 'Select a tour...'}</option>`;
+    tours.forEach(tour => {
+      const opt = document.createElement('option');
+      opt.value = tour.id;
+      opt.textContent = tour[currentLang].name;
+      sel.appendChild(opt);
+    });
+    if (currentValue) sel.value = currentValue;
+    if (!sel.value) sel.selectedIndex = 0;
+  }
+
+  // ─── PRESELECT TOUR FROM CARD ───
+  function preselectTour(tourId) {
+    const sel = document.getElementById('tour-select');
+    sel.value = tourId;
+  }
+
+  // ─── FORM SUBMIT ───
+  document.getElementById('reserva-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    this.style.display = 'none';
+    const success = document.getElementById('form-success');
+    success.style.display = 'block';
+    // Re-apply language to success message
+    success.querySelectorAll('[data-es]').forEach(el => {
+      const val = el.getAttribute('data-' + currentLang);
+      if (val) el.textContent = val;
+    });
+  });
+
+  // ─── INIT ───
+  renderTourCards();
+  renderTourSelect();
+
+  // Set min date on date input to today
+  const dateInput = document.querySelector('input[type="date"]');
+  const today = new Date().toISOString().split('T')[0];
+  dateInput.setAttribute('min', today);
+</script>
+
+</body>
+</html>

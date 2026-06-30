@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(artifact-design)",
+      "Skill(artifact-design:*)",
+      "Bash(claude --version)",
+      "Bash(git -C /Users/eduardogracida/Desktop/Arrancar_Zero status)"
+    ]
+  }
+}
