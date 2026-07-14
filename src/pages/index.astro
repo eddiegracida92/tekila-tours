@@ -1,0 +1,86 @@
+---
+import '@/styles/global.css';
+---
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <title>Tekila Tours — Cancún</title>
+  </head>
+  <body>
+    <main class="container">
+      <section class="hero">
+        <p class="eyebrow">Cancún · Riviera Maya</p>
+        <h1>Tekila Tours</h1>
+        <p class="lead">
+          Scaffolding Astro listo (Step 1). El design system caribeño, las
+          fuentes self-host y el adapter de Vercel ya están en su lugar. La home
+          real se migra en el Step 2.
+        </p>
+        <div class="cta-row">
+          <a class="btn btn-cta" href="/">Reservar</a>
+          <a class="btn btn-secondary" href="/legacy/index.html">Ver sitio actual</a>
+        </div>
+      </section>
+    </main>
+
+    <style>
+      .hero {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-4);
+        align-items: flex-start;
+        padding-block: var(--space-16);
+      }
+      .eyebrow {
+        font-family: var(--font-display);
+        font-weight: var(--fw-semibold);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--color-gold-dim);
+        font-size: var(--fs-sm);
+      }
+      .lead {
+        max-width: 60ch;
+        color: var(--color-muted);
+      }
+      .cta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-3);
+        margin-top: var(--space-2);
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        padding: var(--space-3) var(--space-6);
+        border-radius: var(--radius);
+        font-weight: var(--fw-bold);
+        transition: background-color var(--transition), transform var(--transition);
+      }
+      .btn:hover {
+        transform: translateY(-1px);
+      }
+      .btn-cta {
+        background-color: var(--color-cta);
+        color: var(--color-white);
+      }
+      .btn-cta:hover {
+        background-color: var(--color-coral-dim);
+        color: var(--color-white);
+      }
+      .btn-secondary {
+        background-color: var(--color-surface);
+        color: var(--color-primary);
+      }
+      .btn-secondary:hover {
+        background-color: var(--color-border);
+        color: var(--color-primary);
+      }
+    </style>
+  </body>
+</html>

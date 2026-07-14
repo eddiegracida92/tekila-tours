@@ -1,0 +1,83 @@
+/**
+ * tokens.css — Design system Tekila Tours (identidad caribeña).
+ * Fuente de verdad de colores, tipografía, espaciado y radios (Blueprint §7).
+ * No hardcodear valores en componentes: usar siempre estas variables.
+ */
+
+:root {
+  /* ---- Paleta base ---- */
+  --color-navy: #12192c; /* Primary: header, footer, texto sobre claro */
+  --color-navy-mid: #1e2d4a; /* superficies oscuras secundarias */
+  --color-gold: #d4ab3b; /* Accent: bordes, detalles premium */
+  --color-gold-dim: #a8852c; /* hover de gold */
+  --color-teal: #1cbfc0; /* Secondary: CTAs secundarios, enlaces, "mar" */
+  --color-teal-dim: #169898; /* hover de teal */
+  --color-coral: #e05a2b; /* Highlight: botón reservar, badges "fiesta" */
+  --color-coral-dim: #c04a20; /* hover de coral */
+  --color-sand: #fafaf6; /* Background de página */
+  --color-surface: #f0ede4; /* Tarjetas, paneles (sand dim) */
+  --color-text: #1a1a2e; /* Cuerpo */
+  --color-muted: #6b7280; /* Texto secundario, bordes suaves */
+  --color-white: #ffffff;
+  --color-success: #169898; /* confirmaciones (reutiliza teal) */
+  --color-destructive: #c0392b; /* errores (distinto del coral de acción) */
+
+  /* ---- Roles semánticos ---- */
+  --color-primary: var(--color-navy);
+  --color-accent: var(--color-gold);
+  --color-secondary: var(--color-teal);
+  --color-cta: var(--color-coral); /* acción principal: reservar/pagar */
+  --color-bg: var(--color-sand);
+  --color-border: #e2ddd0;
+
+  /* ---- Tipografía ---- */
+  --font-display: 'Oswald', system-ui, -apple-system, sans-serif;
+  --font-body: 'Nunito', system-ui, -apple-system, sans-serif;
+
+  --fs-h1: clamp(2rem, 6vw, 3.5rem);
+  --fs-h2: clamp(1.5rem, 4vw, 2.25rem);
+  --fs-h3: 1.25rem;
+  --fs-body: 1rem;
+  --fs-sm: 0.9375rem; /* 15px — UI/labels */
+  --fs-xs: 0.875rem; /* 14px */
+
+  --lh-body: 1.6;
+  --lh-heading: 1.15;
+
+  --fw-regular: 400;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  /* ---- Espaciado (4·8·12·16·24·32·48·64) ---- */
+  --space-1: 0.25rem; /* 4px */
+  --space-2: 0.5rem; /* 8px */
+  --space-3: 0.75rem; /* 12px */
+  --space-4: 1rem; /* 16px */
+  --space-6: 1.5rem; /* 24px */
+  --space-8: 2rem; /* 32px */
+  --space-12: 3rem; /* 48px */
+  --space-16: 4rem; /* 64px */
+
+  /* ---- Radios ---- */
+  --radius: 8px; /* por defecto */
+  --radius-card: 16px; /* tarjetas */
+  --radius-full: 9999px; /* pills, avatares */
+
+  /* ---- Layout ---- */
+  --content-max: 1200px;
+
+  /* ---- Sombras suaves ---- */
+  --shadow-sm: 0 1px 2px rgb(18 25 44 / 0.06);
+  --shadow-md: 0 4px 16px rgb(18 25 44 / 0.1);
+  --shadow-lg: 0 12px 32px rgb(18 25 44 / 0.14);
+
+  /* ---- Transiciones ---- */
+  --transition: 160ms ease;
+}
+
+/*
+ * Breakpoints (mobile-first) — referencia para media queries:
+ *   sm 480px · md 768px · lg 1024px · xl 1280px
+ * CSS custom properties no funcionan dentro de @media, así que
+ * se usan estos valores literales en los componentes.
+ */
