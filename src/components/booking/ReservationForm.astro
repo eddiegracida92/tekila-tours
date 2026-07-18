@@ -1,0 +1,100 @@
+---
+import { tours } from '@/data/tours';
+import { useTranslations, type Lang } from '@/i18n/ui';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+---
+
+{/* Placeholder estático. En el Step 7 se reemplaza por el BookingWizard (isla React)
+    con precio y cupo reales vía /api/quote y /api/hold. */}
+<div class="form-wrap">
+  <form id="reserva-form" novalidate>
+    <div class="form-grid">
+      <div class="form-field">
+        <label for="rf-nombre">{t('form.name')}</label>
+        <input id="rf-nombre" type="text" name="nombre" required placeholder={t('form.name_ph')} />
+      </div>
+      <div class="form-field">
+        <label for="rf-telefono">{t('form.phone')}</label>
+        <input id="rf-telefono" type="tel" name="telefono" required placeholder={t('form.phone_ph')} />
+      </div>
+      <div class="form-field full">
+        <label for="rf-email">{t('form.email')}</label>
+        <input id="rf-email" type="email" name="email" required placeholder={t('form.email_ph')} />
+      </div>
+      <div class="form-field full">
+        <label for="rf-tour">{t('form.tour')}</label>
+        <select id="rf-tour" name="tour" required>
+          <option value="" disabled selected>{t('form.tour_ph')}</option>
+          {tours.map((tour) => <option value={tour.id}>{tour[lang].name}</option>)}
+        </select>
+      </div>
+      <div class="form-field">
+        <label for="rf-fecha">{t('form.date')}</label>
+        <input id="rf-fecha" type="date" name="fecha" required />
+      </div>
+      <div class="form-field">
+        <label for="rf-personas">{t('form.people')}</label>
+        <input
+          id="rf-personas"
+          type="number"
+          name="personas"
+          min="1"
+          max="50"
+          required
+          placeholder={t('form.people_ph')}
+        />
+      </div>
+      <div class="form-field full">
+        <label for="rf-comentarios">{t('form.comments')}</label>
+        <textarea id="rf-comentarios" name="comentarios" placeholder={t('form.comments_ph')}></textarea>
+      </div>
+    </div>
+
+    <div class="form-submit">
+      <button type="submit" class="btn-submit">{t('form.submit')}</button>
+    </div>
+    <p class="form-note">{t('form.note')}</p>
+  </form>
+
+  <div class="form-success" id="form-success">
+    <div class="check">✅</div>
+    <h3>{t('form.success_title')}</h3>
+    <p>{t('form.success_msg')}</p>
+  </div>
+</div>
+
+<script>
+  // Fecha mínima = hoy
+  const dateInput = document.querySelector<HTMLInputElement>('#rf-fecha');
+  if (dateInput) {
+    dateInput.min = new Date().toISOString().split('T')[0];
+  }
+
+  // Preseleccionar tour al hacer clic en "Reservar este tour →" de una tarjeta
+  const select = document.querySelector<HTMLSelectElement>('#rf-tour');
+  document.querySelectorAll<HTMLElement>('[data-book-tour]').forEach((el) => {
+    el.addEventListener('click', () => {
+      const id = el.dataset.bookTour;
+      if (select && id) select.value = id;
+    });
+  });
+
+  // Envío simulado (placeholder — el flujo real llega en el Step 8)
+  const form = document.querySelector<HTMLFormElement>('#reserva-form');
+  const success = document.querySelector<HTMLElement>('#form-success');
+  form?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+    form.style.display = 'none';
+    success?.classList.add('visible');
+  });
+</script>

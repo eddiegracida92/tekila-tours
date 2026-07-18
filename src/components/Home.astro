@@ -1,0 +1,86 @@
+---
+import { Image } from 'astro:assets';
+import logo from '@/assets/brand/logo.png';
+import { useTranslations, type Lang } from '@/i18n/ui';
+import { site } from '@/data/site';
+import Header from '@/components/site/Header.astro';
+import ContactBar from '@/components/site/ContactBar.astro';
+import Footer from '@/components/site/Footer.astro';
+import TourGrid from '@/components/tours/TourGrid.astro';
+import ReservationForm from '@/components/booking/ReservationForm.astro';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+---
+
+<Header lang={lang} />
+
+<!-- HERO -->
+<section id="hero" class="hero">
+  <Image src={logo} alt={site.name} class="hero-logo" width={160} height={160} loading="eager" />
+
+  <p class="hero-eyebrow">{t('hero.eyebrow')}</p>
+
+  <h1 class="hero-title">
+    <span>{t('hero.title_line1')}</span><br />
+    <span>{t('hero.title_line2')}</span>
+  </h1>
+
+  <p class="hero-sub">{t('hero.subtitle')}</p>
+
+  <div class="hero-ctas">
+    <a href="#tours" class="btn-primary">{t('hero.cta_tours')}</a>
+    <a href="#reserva" class="btn-secondary">{t('hero.cta_book')}</a>
+  </div>
+
+  <div class="hero-contact">
+    {
+      site.phones.map((phone) => (
+        <a href={`tel:${phone.tel}`}>
+          <span>{phone.icon}</span>
+          <span>{phone.label}</span>
+        </a>
+      ))
+    }
+    <a href={site.instagram.url} target="_blank" rel="noopener">
+      <span>{site.instagram.icon}</span>
+      <span>{site.instagram.handle}</span>
+    </a>
+  </div>
+</section>
+
+<!-- TOURS -->
+<section id="tours" class="tours-section">
+  <div class="section-header">
+    <p class="section-eyebrow">{t('tours.eyebrow')}</p>
+    <h2 class="section-title">
+      {t('tours.title_lead')} <span>{t('tours.title_highlight')}</span>
+    </h2>
+    <p class="section-desc">{t('tours.description')}</p>
+  </div>
+
+  <TourGrid lang={lang} />
+</section>
+
+<!-- RESERVA -->
+<section id="reserva" class="reserva-section">
+  <div class="section-header">
+    <p class="section-eyebrow">{t('reserva.eyebrow')}</p>
+    <h2 class="section-title">
+      {t('reserva.title_lead')} <span>{t('reserva.title_highlight')}</span>
+    </h2>
+    <p class="section-desc">{t('reserva.description')}</p>
+  </div>
+
+  <ReservationForm lang={lang} />
+</section>
+
+<!-- CONTACT BAR -->
+<ContactBar />
+
+<!-- FOOTER -->
+<Footer lang={lang} />

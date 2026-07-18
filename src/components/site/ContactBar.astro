@@ -1,0 +1,23 @@
+---
+import { site } from '@/data/site';
+---
+
+<div id="contacto" class="contact-bar">
+  {
+    site.phones.map((phone) => (
+      <a href={`tel:${phone.tel}`} class="contact-item">
+        <span class="contact-icon">{phone.icon}</span>
+        <span>{phone.label}</span>
+      </a>
+    ))
+  }
+  <a
+    href={site.instagram.url}
+    target="_blank"
+    rel="noopener"
+    class="contact-item"
+  >
+    <span class="contact-icon">{site.instagram.icon}</span>
+    <span>{site.instagram.handle}</span>
+  </a>
+</div>

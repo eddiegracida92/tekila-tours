@@ -1,0 +1,49 @@
+{
+  "meta.title": "Tekila Tours — Tours en Cancún y la Riviera Maya",
+  "meta.description": "Reserva los mejores tours de Cancún y la Riviera Maya con Tekila Tours: Chichén Itzá, Xcaret, Xel-Há, Isla Mujeres y más. Transporte incluido.",
+
+  "nav.tours": "Tours",
+  "nav.book": "Reservar",
+  "nav.contact": "Contacto",
+
+  "hero.eyebrow": "Cancún, México",
+  "hero.title_line1": "Vive la aventura",
+  "hero.title_line2": "de Cancún",
+  "hero.subtitle": "Tours a los mejores destinos de la Riviera Maya. Con Tekila Tours, cada experiencia es inolvidable.",
+  "hero.cta_tours": "Ver Tours",
+  "hero.cta_book": "Reservar Ahora",
+
+  "tours.eyebrow": "Nuestros destinos",
+  "tours.title_lead": "Elige tu",
+  "tours.title_highlight": "aventura",
+  "tours.description": "Cada tour incluye transporte desde Cancún. Explora cada destino y reserva tu favorito.",
+  "tours.book_this": "Reservar este tour →",
+
+  "reserva.eyebrow": "Reservaciones",
+  "reserva.title_lead": "Reserva tu",
+  "reserva.title_highlight": "lugar",
+  "reserva.description": "Llena el formulario y te contactamos en menos de 24 horas para confirmar tu tour.",
+
+  "form.name": "Nombre",
+  "form.name_ph": "Eduardo García",
+  "form.phone": "Teléfono / WhatsApp",
+  "form.phone_ph": "+52 998 000 0000",
+  "form.email": "Correo electrónico",
+  "form.email_ph": "correo@ejemplo.com",
+  "form.tour": "Tour de interés",
+  "form.tour_ph": "Selecciona un tour...",
+  "form.date": "Fecha preferida",
+  "form.people": "Número de personas",
+  "form.people_ph": "2",
+  "form.comments": "Comentarios (opcional)",
+  "form.comments_ph": "Preguntas especiales, restricciones alimentarias, etc.",
+  "form.submit": "Enviar reservación",
+  "form.note": "Te contactaremos vía WhatsApp o correo para confirmar.",
+  "form.success_title": "¡Reservación enviada!",
+  "form.success_msg": "Gracias por elegir Tekila Tours. Te contactaremos pronto para confirmar tu aventura.",
+
+  "footer.rights": "Todos los derechos reservados.",
+
+  "lang.es": "Español",
+  "lang.en": "English"
+}

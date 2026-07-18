@@ -1,0 +1,46 @@
+---
+import '@/styles/global.css';
+import { defaultLang, type Lang } from '@/i18n/ui';
+
+interface Props {
+  lang: Lang;
+  title: string;
+  description: string;
+}
+
+const { lang, title, description } = Astro.props;
+
+// URL canónica y alternantes hreflang (SEO — se afina en Step 12).
+const siteUrl = Astro.site ?? new URL('http://localhost:4321');
+const canonicalEs = new URL('/', siteUrl).href;
+const canonicalEn = new URL('/en/', siteUrl).href;
+const canonical = lang === defaultLang ? canonicalEs : canonicalEn;
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="generator" content={Astro.generator} />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+
+    <link rel="alternate" hreflang="es" href={canonicalEs} />
+    <link rel="alternate" hreflang="en" href={canonicalEn} />
+    <link rel="alternate" hreflang="x-default" href={canonicalEs} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content={lang === 'es' ? 'es_MX' : 'en_US'} />
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

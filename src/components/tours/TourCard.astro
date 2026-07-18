@@ -1,0 +1,39 @@
+---
+import { Image } from 'astro:assets';
+import type { Tour } from '@/data/tours';
+import { useTranslations, type Lang } from '@/i18n/ui';
+
+interface Props {
+  tour: Tour;
+  lang: Lang;
+}
+
+const { tour, lang } = Astro.props;
+const t = useTranslations(lang);
+const content = tour[lang];
+---
+
+<article class="tour-card">
+  <Image
+    src={tour.image}
+    alt={content.name}
+    class="tour-card-img"
+    width={700}
+    height={481}
+    loading="lazy"
+  />
+
+  <div class="tour-card-base">
+    <p class="tour-tag">{content.tag}</p>
+    <h3 class="tour-name">{content.name}</h3>
+  </div>
+
+  <div class="tour-card-hover">
+    <p class="tour-tag">{content.tag}</p>
+    <h3 class="tour-name">{content.name}</h3>
+    <p class="tour-desc">{content.desc}</p>
+    <a href="#reserva" class="btn-book" data-book-tour={tour.id}>
+      {t('tours.book_this')}
+    </a>
+  </div>
+</article>

@@ -1,0 +1,49 @@
+{
+  "meta.title": "Tekila Tours — Cancún & Riviera Maya Tours",
+  "meta.description": "Book the best Cancún and Riviera Maya tours with Tekila Tours: Chichén Itzá, Xcaret, Xel-Há, Isla Mujeres and more. Transport included.",
+
+  "nav.tours": "Tours",
+  "nav.book": "Book Now",
+  "nav.contact": "Contact",
+
+  "hero.eyebrow": "Cancún, Mexico",
+  "hero.title_line1": "Live the adventure",
+  "hero.title_line2": "of Cancún",
+  "hero.subtitle": "Tours to the best destinations in the Riviera Maya. With Tekila Tours, every experience is unforgettable.",
+  "hero.cta_tours": "See Tours",
+  "hero.cta_book": "Book Now",
+
+  "tours.eyebrow": "Our destinations",
+  "tours.title_lead": "Choose your",
+  "tours.title_highlight": "adventure",
+  "tours.description": "Every tour includes transport from Cancún. Explore each destination and book your favorite.",
+  "tours.book_this": "Book this tour →",
+
+  "reserva.eyebrow": "Reservations",
+  "reserva.title_lead": "Book your",
+  "reserva.title_highlight": "spot",
+  "reserva.description": "Fill out the form and we'll contact you within 24 hours to confirm your tour.",
+
+  "form.name": "Name",
+  "form.name_ph": "Eduardo García",
+  "form.phone": "Phone / WhatsApp",
+  "form.phone_ph": "+52 998 000 0000",
+  "form.email": "Email",
+  "form.email_ph": "email@example.com",
+  "form.tour": "Tour of interest",
+  "form.tour_ph": "Select a tour...",
+  "form.date": "Preferred date",
+  "form.people": "Number of people",
+  "form.people_ph": "2",
+  "form.comments": "Comments (optional)",
+  "form.comments_ph": "Special requests, dietary restrictions, etc.",
+  "form.submit": "Send reservation",
+  "form.note": "We'll contact you via WhatsApp or email to confirm.",
+  "form.success_title": "Reservation sent!",
+  "form.success_msg": "Thank you for choosing Tekila Tours. We'll be in touch soon to confirm your adventure.",
+
+  "footer.rights": "All rights reserved.",
+
+  "lang.es": "Español",
+  "lang.en": "English"
+}

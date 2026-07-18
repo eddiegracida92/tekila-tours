@@ -1,0 +1,15 @@
+---
+import { tours } from '@/data/tours';
+import type { Lang } from '@/i18n/ui';
+import TourCard from './TourCard.astro';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+---
+
+<div class="tours-grid">
+  {tours.map((tour) => <TourCard tour={tour} lang={lang} />)}
+</div>

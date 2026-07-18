@@ -1,0 +1,28 @@
+---
+import { Image } from 'astro:assets';
+import logo from '@/assets/brand/logo.png';
+import { useTranslations, type Lang } from '@/i18n/ui';
+import { site } from '@/data/site';
+import LangSwitch from './LangSwitch.astro';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+---
+
+<header class="site-header">
+  <a href="#hero" class="header-logo" aria-label={site.name}>
+    <Image src={logo} alt={site.name} width={48} height={48} />
+    <span>TEKILA TOURS</span>
+  </a>
+
+  <nav class="site-nav">
+    <a class="nav-link" href="#tours">{t('nav.tours')}</a>
+    <a class="nav-link" href="#reserva">{t('nav.book')}</a>
+    <a class="nav-link" href="#contacto">{t('nav.contact')}</a>
+    <LangSwitch lang={lang} />
+  </nav>
+</header>

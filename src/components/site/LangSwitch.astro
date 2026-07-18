@@ -1,0 +1,29 @@
+---
+import { localizePath, type Lang } from '@/i18n/ui';
+
+interface Props {
+  lang: Lang;
+  /** Ruta (sin prefijo de idioma) de la página actual, para enlazar su equivalente. */
+  basePath?: string;
+}
+
+const { lang, basePath = '/' } = Astro.props;
+
+const hrefEs = localizePath(basePath, 'es');
+const hrefEn = localizePath(basePath, 'en');
+---
+
+<div class="lang-toggle" role="group" aria-label="Idioma / Language">
+  <a
+    class:list={['lang-btn', { active: lang === 'es' }]}
+    href={hrefEs}
+    hreflang="es"
+    aria-current={lang === 'es' ? 'true' : undefined}>ES</a
+  >
+  <a
+    class:list={['lang-btn', { active: lang === 'en' }]}
+    href={hrefEn}
+    hreflang="en"
+    aria-current={lang === 'en' ? 'true' : undefined}>EN</a
+  >
+</div>
