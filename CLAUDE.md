@@ -51,7 +51,9 @@ Ver `.env.example`. Nunca prefijar secretos con `PUBLIC_`. Service role solo en 
 2. El precio cobrado = salida de `/api/quote` (server); nunca confiar en el cliente.
 3. Toda reserva pagada se confirma vía webhook idempotente, no desde el navegador.
 4. Performance budget: home < 2–3 MB, LCP < 2.5 s; toda imagen vía `astro:assets`.
-5. Precio Reporte (PR) jamás se expone al público; solo visible a rol owner en admin.
+5. Precio Reporte (PR) jamás se expone al público anónimo. Visible a rol owner en admin y a
+   vendedores que el owner autorice vía switch `puede_ver_pr` (default false), aplicado
+   **server-side** (RLS/API) dentro del portal autenticado — nunca por ocultar solo en la UI.
 
 ## Legacy
 El sitio original (landing monolítica GitHub Pages) está respaldado en `public/legacy/`
