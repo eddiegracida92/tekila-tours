@@ -1,0 +1,24 @@
+---
+import { useTranslations, type Lang } from '@/i18n/ui';
+
+interface Props {
+  monto: number;
+  moneda: string;
+  lang: Lang;
+  class?: string;
+}
+
+const { monto, moneda, lang, class: className } = Astro.props;
+const t = useTranslations(lang);
+
+// Solo el Precio Público llega aquí; el PR jamás sale del servidor.
+const nf = new Intl.NumberFormat(lang === 'es' ? 'es-MX' : 'en-US', {
+  maximumFractionDigits: 0,
+});
+---
+
+<p class:list={['price-badge', className]}>
+  <span class="price-from">{t('tours.from')}</span>
+  <span class="price-amount">${nf.format(monto)}</span>
+  <span class="price-cur">{moneda}</span>
+</p>

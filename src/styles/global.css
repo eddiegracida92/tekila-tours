@@ -822,3 +822,247 @@ ol {
     display: none;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   STEP 5 — Catálogo dinámico: badge de precio, acciones de tarjeta,
+   página de detalle y galería.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Badge "precio desde" ─── */
+.price-badge {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35em;
+  font-family: var(--font-display);
+  line-height: 1;
+}
+
+.price-badge .price-from {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.price-badge .price-amount {
+  font-size: 1.15rem;
+  font-weight: var(--fw-bold);
+  color: var(--color-gold);
+}
+
+.price-badge .price-cur {
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  opacity: 0.85;
+}
+
+/* Badge flotante sobre la imagen (estado base de la tarjeta). */
+.price-badge.on-card {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  background: rgba(18, 25, 44, 0.85);
+  color: var(--color-white);
+  padding: 0.4rem 0.7rem;
+  border-radius: var(--radius-full);
+  backdrop-filter: blur(4px);
+}
+
+.price-badge.on-hover {
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: var(--space-4);
+}
+
+/* ─── Acciones de la tarjeta (Ver detalles + Reservar) ─── */
+.tour-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.btn-book-ghost {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.65rem var(--space-6);
+  background: transparent;
+  color: var(--color-white);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 4px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: border-color var(--transition), background var(--transition);
+}
+
+.btn-book-ghost:hover {
+  border-color: var(--color-teal);
+  background: rgba(28, 191, 192, 0.15);
+  color: var(--color-white);
+}
+
+/* ─── Página de detalle ─── */
+.tour-detail {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-8);
+}
+
+.tour-detail-back {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-teal-dim);
+  text-decoration: none;
+  margin-bottom: var(--space-6);
+  transition: color var(--transition);
+}
+
+.tour-detail-back:hover {
+  color: var(--color-navy);
+}
+
+.tour-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-8);
+}
+
+@media (min-width: 900px) {
+  .tour-detail-grid {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.tour-detail-info .tour-tag {
+  color: var(--color-teal-dim);
+  margin-bottom: var(--space-2);
+}
+
+.tour-detail-title {
+  font-family: var(--font-display);
+  font-size: var(--fs-h1);
+  font-weight: var(--fw-bold);
+  color: var(--color-navy);
+  line-height: var(--lh-heading);
+  margin-bottom: var(--space-4);
+  text-wrap: balance;
+}
+
+.price-badge.on-detail {
+  margin-bottom: var(--space-6);
+}
+
+.price-badge.on-detail .price-from,
+.price-badge.on-detail .price-cur {
+  color: var(--color-muted);
+  opacity: 1;
+}
+
+.tour-detail-desc {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--color-text);
+  margin-bottom: var(--space-6);
+}
+
+.tour-detail-facts {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.tour-detail-facts li {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+  color: var(--color-navy);
+  background: var(--color-surface);
+  padding: 0.45rem 0.8rem;
+  border-radius: var(--radius-full);
+}
+
+.tour-detail-list {
+  margin-bottom: var(--space-6);
+}
+
+.tour-detail-list h2 {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  color: var(--color-navy);
+  margin-bottom: var(--space-3);
+}
+
+.tour-detail-list ul {
+  list-style: none;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.tour-detail-list li {
+  position: relative;
+  padding-left: 1.6rem;
+  line-height: var(--lh-body);
+  color: var(--color-text);
+}
+
+.tour-detail-list li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: var(--color-teal-dim);
+  font-weight: var(--fw-bold);
+}
+
+.tour-detail-list--x li::before {
+  content: '✕';
+  color: var(--color-muted);
+}
+
+.tour-detail-cta {
+  margin-top: var(--space-2);
+}
+
+.tour-detail-note {
+  font-size: var(--fs-xs);
+  color: var(--color-muted);
+  margin-top: var(--space-3);
+}
+
+/* ─── Galería ─── */
+.tour-gallery-main {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  height: auto;
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-md);
+  object-fit: cover;
+  object-position: center top;
+}
+
+@media (min-width: 900px) {
+  .tour-detail-media {
+    position: sticky;
+    top: var(--space-8);
+  }
+}
+
+.tour-gallery-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.tour-gallery-thumb {
+  width: 96px;
+  height: 96px;
+  border-radius: var(--radius);
+  object-fit: cover;
+  box-shadow: var(--shadow-sm);
+}

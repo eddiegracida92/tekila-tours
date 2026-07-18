@@ -1,19 +1,21 @@
 ---
 import '@/styles/global.css';
-import { defaultLang, type Lang } from '@/i18n/ui';
+import { defaultLang, localizePath, type Lang } from '@/i18n/ui';
 
 interface Props {
   lang: Lang;
   title: string;
   description: string;
+  /** Ruta lógica sin prefijo de idioma (p. ej. `/tours/xplor`). Default `/`. */
+  path?: string;
 }
 
-const { lang, title, description } = Astro.props;
+const { lang, title, description, path = '/' } = Astro.props;
 
 // URL canónica y alternantes hreflang (SEO — se afina en Step 12).
 const siteUrl = Astro.site ?? new URL('http://localhost:4321');
-const canonicalEs = new URL('/', siteUrl).href;
-const canonicalEn = new URL('/en/', siteUrl).href;
+const canonicalEs = new URL(localizePath(path, 'es'), siteUrl).href;
+const canonicalEn = new URL(localizePath(path, 'en'), siteUrl).href;
 const canonical = lang === defaultLang ? canonicalEs : canonicalEn;
 ---
 

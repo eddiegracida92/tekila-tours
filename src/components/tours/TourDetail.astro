@@ -1,0 +1,83 @@
+---
+import type { CatalogTour } from '@/lib/catalog';
+import { useTranslations, localizePath, type Lang } from '@/i18n/ui';
+import Header from '@/components/site/Header.astro';
+import ContactBar from '@/components/site/ContactBar.astro';
+import Footer from '@/components/site/Footer.astro';
+import TourGallery from './TourGallery.astro';
+import PriceBadge from './PriceBadge.astro';
+
+interface Props {
+  tour: CatalogTour;
+  lang: Lang;
+}
+
+const { tour, lang } = Astro.props;
+const t = useTranslations(lang);
+const c = tour[lang];
+
+const images = tour.image ? [tour.image] : [];
+const backHref = `${localizePath('/', lang)}#tours`;
+const bookHref = `${localizePath('/', lang)}#reserva`;
+---
+
+<Header lang={lang} />
+
+<main class="tour-detail">
+  <a href={backHref} class="tour-detail-back">← {t('detail.back')}</a>
+
+  <div class="tour-detail-grid">
+    <div class="tour-detail-media">
+      <TourGallery images={images} alt={c.name} />
+    </div>
+
+    <div class="tour-detail-info">
+      {c.tag && <p class="tour-tag">{c.tag}</p>}
+      <h1 class="tour-detail-title">{c.name}</h1>
+
+      {
+        tour.precioDesde && (
+          <PriceBadge
+            lang={lang}
+            monto={tour.precioDesde.monto}
+            moneda={tour.precioDesde.moneda}
+            class="on-detail"
+          />
+        )
+      }
+
+      <p class="tour-detail-desc">{c.descLarga || c.desc}</p>
+
+      <ul class="tour-detail-facts">
+        {tour.duracion && <li>⏱️ {tour.duracion}</li>}
+        {tour.incluyeTransporte && <li>🚐 {t('detail.transport')}</li>}
+      </ul>
+
+      {
+        c.incluye.length > 0 && (
+          <section class="tour-detail-list">
+            <h2>{t('detail.includes')}</h2>
+            <ul>{c.incluye.map((item) => <li>{item}</li>)}</ul>
+          </section>
+        )
+      }
+
+      {
+        c.noIncluye.length > 0 && (
+          <section class="tour-detail-list tour-detail-list--x">
+            <h2>{t('detail.not_includes')}</h2>
+            <ul>{c.noIncluye.map((item) => <li>{item}</li>)}</ul>
+          </section>
+        )
+      }
+
+      <a href={bookHref} class="btn-primary tour-detail-cta" data-book-tour={tour.slug}>
+        {t('detail.book_cta')}
+      </a>
+      <p class="tour-detail-note">{t('detail.book_note')}</p>
+    </div>
+  </div>
+</main>
+
+<ContactBar />
+<Footer lang={lang} />

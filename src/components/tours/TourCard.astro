@@ -1,33 +1,50 @@
 ---
 import { Picture } from 'astro:assets';
-import type { Tour } from '@/data/tours';
-import { useTranslations, type Lang } from '@/i18n/ui';
+import type { CatalogTour } from '@/lib/catalog';
+import { useTranslations, localizePath, type Lang } from '@/i18n/ui';
+import PriceBadge from './PriceBadge.astro';
 
 interface Props {
-  tour: Tour;
+  tour: CatalogTour;
   lang: Lang;
 }
 
 const { tour, lang } = Astro.props;
 const t = useTranslations(lang);
 const content = tour[lang];
+const detailHref = localizePath(`/tours/${tour.slug}`, lang);
+const bookHref = `${localizePath('/', lang)}#reserva`;
 
 // Ancho de tarjeta: 100vw en móvil, ~50vw en tablet, ~360px (col) en desktop.
 const cardSizes = '(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 360px';
 ---
 
 <article class="tour-card">
-  <Picture
-    src={tour.image}
-    formats={['avif', 'webp']}
-    alt={content.name}
-    class="tour-card-img"
-    widths={[360, 480, 720]}
-    sizes={cardSizes}
-    loading="lazy"
-  />
+  {
+    tour.image && (
+      <Picture
+        src={tour.image}
+        formats={['avif', 'webp']}
+        alt={content.name}
+        class="tour-card-img"
+        widths={[360, 480, 720]}
+        sizes={cardSizes}
+        loading="lazy"
+      />
+    )
+  }
 
   <div class="tour-card-base">
+    {
+      tour.precioDesde && (
+        <PriceBadge
+          lang={lang}
+          monto={tour.precioDesde.monto}
+          moneda={tour.precioDesde.moneda}
+          class="on-card"
+        />
+      )
+    }
     <p class="tour-tag">{content.tag}</p>
     <h3 class="tour-name">{content.name}</h3>
   </div>
@@ -36,8 +53,21 @@ const cardSizes = '(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 360px';
     <p class="tour-tag">{content.tag}</p>
     <h3 class="tour-name">{content.name}</h3>
     <p class="tour-desc">{content.desc}</p>
-    <a href="#reserva" class="btn-book" data-book-tour={tour.id}>
-      {t('tours.book_this')}
-    </a>
+    {
+      tour.precioDesde && (
+        <PriceBadge
+          lang={lang}
+          monto={tour.precioDesde.monto}
+          moneda={tour.precioDesde.moneda}
+          class="on-hover"
+        />
+      )
+    }
+    <div class="tour-card-actions">
+      <a href={detailHref} class="btn-book">{t('tours.view_detail')}</a>
+      <a href={bookHref} class="btn-book-ghost" data-book-tour={tour.slug}>
+        {t('tours.book_this')}
+      </a>
+    </div>
   </div>
 </article>

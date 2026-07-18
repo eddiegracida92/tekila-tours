@@ -1,0 +1,48 @@
+---
+import { Picture } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+interface Props {
+  images: ImageMetadata[];
+  alt: string;
+}
+
+const { images, alt } = Astro.props;
+const [main, ...rest] = images;
+
+// Galería: imagen principal grande + miniaturas. Hoy la BD trae una sola
+// imagen local por tour; el Step 10 puebla `tour_imagenes` con más assets.
+---
+
+<div class="tour-gallery">
+  {
+    main && (
+      <Picture
+        src={main}
+        formats={['avif', 'webp']}
+        alt={alt}
+        class="tour-gallery-main"
+        widths={[480, 768, 1100]}
+        sizes="(max-width: 900px) 100vw, 640px"
+        loading="eager"
+      />
+    )
+  }
+  {
+    rest.length > 0 && (
+      <div class="tour-gallery-thumbs">
+        {rest.map((img) => (
+          <Picture
+            src={img}
+            formats={['avif', 'webp']}
+            alt={alt}
+            class="tour-gallery-thumb"
+            widths={[120, 240]}
+            sizes="120px"
+            loading="lazy"
+          />
+        ))}
+      </div>
+    )
+  }
+</div>

@@ -17,7 +17,16 @@
   "tours.title_lead": "Choose your",
   "tours.title_highlight": "adventure",
   "tours.description": "Every tour includes transport from Cancún. Explore each destination and book your favorite.",
-  "tours.book_this": "Book this tour →",
+  "tours.book_this": "Book →",
+  "tours.view_detail": "View details →",
+  "tours.from": "From",
+
+  "detail.back": "Back to tours",
+  "detail.transport": "Transport included from Cancún",
+  "detail.includes": "What's included",
+  "detail.not_includes": "Not included",
+  "detail.book_cta": "Book this tour",
+  "detail.book_note": "Final price and availability are confirmed at booking.",
 
   "reserva.eyebrow": "Reservations",
   "reserva.title_lead": "Book your",

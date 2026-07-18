@@ -1,13 +1,14 @@
 ---
-import { tours } from '@/data/tours';
+import type { CatalogTour } from '@/lib/catalog';
 import type { Lang } from '@/i18n/ui';
 import TourCard from './TourCard.astro';
 
 interface Props {
+  tours: CatalogTour[];
   lang: Lang;
 }
 
-const { lang } = Astro.props;
+const { tours, lang } = Astro.props;
 ---
 
 <div class="tours-grid">

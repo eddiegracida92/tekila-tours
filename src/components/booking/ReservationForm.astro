@@ -1,12 +1,13 @@
 ---
-import { tours } from '@/data/tours';
+import type { CatalogTour } from '@/lib/catalog';
 import { useTranslations, type Lang } from '@/i18n/ui';
 
 interface Props {
   lang: Lang;
+  tours: CatalogTour[];
 }
 
-const { lang } = Astro.props;
+const { lang, tours } = Astro.props;
 const t = useTranslations(lang);
 ---
 
@@ -31,7 +32,7 @@ const t = useTranslations(lang);
         <label for="rf-tour">{t('form.tour')}</label>
         <select id="rf-tour" name="tour" required>
           <option value="" disabled selected>{t('form.tour_ph')}</option>
-          {tours.map((tour) => <option value={tour.id}>{tour[lang].name}</option>)}
+          {tours.map((tour) => <option value={tour.slug}>{tour[lang].name}</option>)}
         </select>
       </div>
       <div class="form-field">
