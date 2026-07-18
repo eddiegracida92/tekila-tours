@@ -10,6 +10,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "db:push": "supabase db push --linked",
     "db:seed": "supabase db push --linked --include-seed"
   },
@@ -22,7 +24,11 @@
     "astro": "^7.0.9",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "sharp": "^0.35.3"
+    "sharp": "^0.35.3",
+    "zod": "^4.4.3"
   },
-  "description": "Web-app de reservación de tours en Cancún — catálogo bilingüe, disponibilidad por fecha, matriz de precios y pago en línea."
+  "description": "Web-app de reservación de tours en Cancún — catálogo bilingüe, disponibilidad por fecha, matriz de precios y pago en línea.",
+  "devDependencies": {
+    "vitest": "^4.1.10"
+  }
 }
