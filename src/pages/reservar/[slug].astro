@@ -1,0 +1,23 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import BookingView from '@/components/booking/BookingView.astro';
+import { getCatalogTours } from '@/lib/catalog';
+import { useTranslations } from '@/i18n/ui';
+
+export async function getStaticPaths() {
+  const tours = await getCatalogTours();
+  return tours.map((tour) => ({ params: { slug: tour.slug }, props: { tour } }));
+}
+
+const lang = 'es' as const;
+const { tour } = Astro.props;
+const t = useTranslations(lang);
+const c = tour.es;
+
+const title = `${t('booking.title')} · ${c.name} — Tekila Tours`;
+const description = c.desc || t('meta.description');
+---
+
+<BaseLayout lang={lang} title={title} description={description} path={`/reservar/${tour.slug}`}>
+  <BookingView tour={tour} lang={lang} />
+</BaseLayout>

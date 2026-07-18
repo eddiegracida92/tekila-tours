@@ -1,0 +1,35 @@
+---
+import type { CatalogTour } from '@/lib/catalog';
+import { useTranslations, localizePath, type Lang } from '@/i18n/ui';
+import Header from '@/components/site/Header.astro';
+import ContactBar from '@/components/site/ContactBar.astro';
+import Footer from '@/components/site/Footer.astro';
+import BookingWizard from './BookingWizard';
+
+interface Props {
+  tour: CatalogTour;
+  lang: Lang;
+}
+
+const { tour, lang } = Astro.props;
+const t = useTranslations(lang);
+const c = tour[lang];
+
+const backHref = localizePath(`/tours/${tour.slug}`, lang);
+---
+
+<Header lang={lang} />
+
+<main class="bk-page">
+  <a href={backHref} class="tour-detail-back">{t('booking.back')}</a>
+
+  <header class="bk-page-head">
+    <p class="tour-tag">{t('booking.title')}</p>
+    <h1 class="bk-page-title">{c.name}</h1>
+  </header>
+
+  <BookingWizard client:only="react" slug={tour.slug} lang={lang} />
+</main>
+
+<ContactBar />
+<Footer lang={lang} />

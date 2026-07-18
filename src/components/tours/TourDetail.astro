@@ -18,7 +18,7 @@ const c = tour[lang];
 
 const images = tour.image ? [tour.image] : [];
 const backHref = `${localizePath('/', lang)}#tours`;
-const bookHref = `${localizePath('/', lang)}#reserva`;
+const bookHref = localizePath(`/reservar/${tour.slug}`, lang);
 ---
 
 <Header lang={lang} />
