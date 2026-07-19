@@ -25,10 +25,16 @@
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "sharp": "^0.35.3",
+    "stripe": "^22.3.2",
     "zod": "^4.4.3"
   },
   "description": "Web-app de reservación de tours en Cancún — catálogo bilingüe, disponibilidad por fecha, matriz de precios y pago en línea.",
   "devDependencies": {
+    "@astrojs/check": "^0.9.9",
+    "@types/node": "^26.1.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^6.0.3",
     "vitest": "^4.1.10"
   }
 }
