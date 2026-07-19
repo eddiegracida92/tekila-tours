@@ -1,0 +1,151 @@
+---
+export const prerender = false;
+
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import { createServerSupabase, esOwner } from '@/lib/auth';
+
+const admin = Astro.locals.admin!;
+const supabase = createServerSupabase(Astro.request, Astro.cookies);
+
+// Enfoque A: la sesión del admin + RLS `reservas_read` (owner/staff ven todas;
+// un vendedor —que aquí no entra— solo las suyas). NO pedimos costo_total_pr ni
+// margen: están revocados a `authenticated` (Capa 1) y no se muestran aquí.
+const { data: reservas } = await supabase
+  .from('reservas')
+  .select('id, folio, fecha, estado, canal, vendedor_id, total, moneda, cliente_nombre, tours(nombre_es)')
+  .order('creado_en', { ascending: false })
+  .limit(200);
+
+// Nombres de vendedores (solo el owner lee toda la tabla admin_users).
+let vendedorNombre = new Map<string, string>();
+if (esOwner(admin)) {
+  const { data: vend } = await supabase.from('admin_users').select('id, nombre').eq('rol', 'vendedor');
+  vendedorNombre = new Map((vend ?? []).map((v) => [v.id, v.nombre ?? '—']));
+}
+
+const fmt = (iso: string) =>
+  new Date(`${iso}T00:00:00`).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+
+const estadoClase: Record<string, string> = {
+  pagada: 'on',
+  pago_iniciado: 'wait',
+  pendiente: 'wait',
+  cancelada: 'no',
+  reembolsada: 'no',
+};
+---
+
+<AdminLayout title="Reservas" active="reservas">
+  <p class="count">{reservas?.length ?? 0} reservas (más recientes primero)</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Folio</th>
+          <th>Tour</th>
+          <th>Fecha</th>
+          <th>Cliente</th>
+          <th>Canal</th>
+          <th>Estado</th>
+          <th class="num">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {(reservas ?? []).map((r: any) => (
+          <tr>
+            <td class="folio">{r.folio}</td>
+            <td>{r.tours?.nombre_es ?? '—'}</td>
+            <td>{fmt(r.fecha)}</td>
+            <td>{r.cliente_nombre}</td>
+            <td>
+              {r.canal === 'vendedor' ? (
+                <span>Vendedor{esOwner(admin) && r.vendedor_id ? `: ${vendedorNombre.get(r.vendedor_id) ?? '—'}` : ''}</span>
+              ) : (
+                'Web'
+              )}
+            </td>
+            <td>
+              <span class:list={['badge', estadoClase[r.estado] ?? 'wait']}>{r.estado}</span>
+            </td>
+            <td class="num">{r.moneda} {Number(r.total).toFixed(2)}</td>
+          </tr>
+        ))}
+        {(reservas ?? []).length === 0 && (
+          <tr>
+            <td colspan="7" class="empty">Aún no hay reservas.</td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  </div>
+</AdminLayout>
+
+<style>
+  .count {
+    margin: 0 0 var(--space-4);
+    color: var(--color-muted);
+    font-size: var(--fs-sm);
+  }
+  .table-wrap {
+    overflow-x: auto;
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--fs-sm);
+  }
+  th,
+  td {
+    text-align: left;
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+    white-space: nowrap;
+  }
+  th {
+    font-family: var(--font-display);
+    font-weight: var(--fw-semibold);
+    color: var(--color-navy);
+    background: var(--color-surface);
+  }
+  .folio {
+    font-variant-numeric: tabular-nums;
+    font-weight: var(--fw-semibold);
+  }
+  .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-full);
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-bold);
+    text-transform: capitalize;
+  }
+  .badge.on {
+    color: var(--color-success);
+    background: rgb(28 191 192 / 0.14);
+  }
+  .badge.wait {
+    color: var(--color-gold-dim);
+    background: rgb(212 171 59 / 0.14);
+  }
+  .badge.no {
+    color: var(--color-muted);
+    background: var(--color-surface);
+  }
+  .empty {
+    text-align: center;
+    color: var(--color-muted);
+    padding: var(--space-8);
+    white-space: normal;
+  }
+</style>

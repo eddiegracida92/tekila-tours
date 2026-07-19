@@ -1,0 +1,233 @@
+---
+export const prerender = false;
+
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import { esOwner } from '@/lib/auth';
+import { createAdminClient } from '@/lib/supabase';
+
+const admin = Astro.locals.admin!;
+const owner = esOwner(admin);
+
+// La gestión de vendedores es solo del owner (crear cuentas de Auth, comisión,
+// switch puede_ver_pr son sensibles). El middleware ya excluyó a los vendedores
+// del panel; aquí además exigimos owner (un staff no gestiona cuentas).
+if (!owner) {
+  return new Response('No autorizado', { status: 403 });
+}
+
+// Gestión de cuentas de Auth ⇒ requiere service_role. Autorizado por `owner`.
+const svc = createAdminClient();
+
+let aviso: string | null = null;
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const accion = form.get('accion');
+  const uid = String(form.get('uid') ?? '');
+  if (uid && accion === 'toggle') {
+    const activar = form.get('activar') === '1';
+    const { error } = await svc.from('admin_users').update({ activo: activar }).eq('id', uid);
+    aviso = error ? 'No se pudo cambiar el estado.' : activar ? 'Vendedor activado.' : 'Vendedor desactivado.';
+  }
+}
+
+// Vendedores (fila en admin_users) + su email (vive en auth.users).
+const { data: vendedores } = await svc
+  .from('admin_users')
+  .select('id, nombre, activo, comision_tipo, comision_valor, permisos')
+  .eq('rol', 'vendedor')
+  .order('nombre', { ascending: true });
+
+const { data: authList } = await svc.auth.admin.listUsers({ perPage: 1000 });
+const emailPorId = new Map((authList?.users ?? []).map((u) => [u.id, u.email ?? '—']));
+
+const comisionTxt = (t: string | null, v: number | null) =>
+  t == null || v == null ? '—' : t === 'porcentaje' ? `${v}%` : `$${Number(v).toFixed(2)}`;
+const permTxt = (p: any) => {
+  const on: string[] = [];
+  if (p?.puede_ver_pr) on.push('PR');
+  if (p?.puede_descuentos) on.push('descuentos');
+  if (p?.ve_disponibilidad_todos) on.push('disp. todos');
+  return on.length ? on.join(', ') : '—';
+};
+---
+
+<AdminLayout title="Vendedores" active="vendedores">
+  <div class="head">
+    <div>
+      <p class="count">{vendedores?.length ?? 0} vendedores</p>
+      <p class="desc">
+        Cuentas de vendedor: acceso al portal de ventas, comisión por venta y permisos.
+        Solo el owner las gestiona. Al crear una, se genera una contraseña temporal.
+      </p>
+    </div>
+    <a class="new" href="/admin/vendedores/nuevo">+ Nuevo vendedor</a>
+  </div>
+
+  {aviso && <p class="aviso">{aviso}</p>}
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Correo</th>
+          <th>Comisión</th>
+          <th>Permisos</th>
+          <th>Estado</th>
+          <th class="right">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {(vendedores ?? []).map((v) => (
+          <tr class:list={[{ off: !v.activo }]}>
+            <td>{v.nombre ?? '—'}</td>
+            <td>{emailPorId.get(v.id) ?? '—'}</td>
+            <td>{comisionTxt(v.comision_tipo, v.comision_valor)}</td>
+            <td>{permTxt(v.permisos)}</td>
+            <td>
+              <span class:list={['badge', v.activo ? 'on' : 'no']}>{v.activo ? 'Activo' : 'Inactivo'}</span>
+            </td>
+            <td class="right">
+              <a class="action" href={`/admin/vendedores/${v.id}`}>Editar</a>
+              <form method="POST" class="inline">
+                <input type="hidden" name="accion" value="toggle" />
+                <input type="hidden" name="uid" value={v.id} />
+                <input type="hidden" name="activar" value={v.activo ? '0' : '1'} />
+                <button type="submit" class="linkbtn">{v.activo ? 'Desactivar' : 'Activar'}</button>
+              </form>
+            </td>
+          </tr>
+        ))}
+        {(vendedores ?? []).length === 0 && (
+          <tr>
+            <td colspan="6" class="empty">Aún no hay vendedores. Crea el primero con "Nuevo vendedor".</td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  </div>
+</AdminLayout>
+
+<style>
+  .head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+  }
+  .count {
+    margin: 0 0 var(--space-1);
+    color: var(--color-navy);
+    font-weight: var(--fw-bold);
+  }
+  .desc {
+    margin: 0;
+    color: var(--color-muted);
+    font-size: var(--fs-sm);
+    max-width: 62ch;
+  }
+  .new {
+    flex-shrink: 0;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-bold);
+    color: var(--color-white);
+    background: var(--color-cta);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius);
+    text-decoration: none;
+  }
+  .new:hover {
+    background: var(--color-coral-dim);
+  }
+  .aviso {
+    margin: 0 0 var(--space-4);
+    padding: var(--space-3);
+    background: var(--color-surface);
+    border-left: 3px solid var(--color-teal);
+    border-radius: var(--radius);
+    font-size: var(--fs-sm);
+  }
+  .table-wrap {
+    overflow-x: auto;
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--fs-sm);
+  }
+  th,
+  td {
+    text-align: left;
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+    white-space: nowrap;
+  }
+  th {
+    font-family: var(--font-display);
+    font-weight: var(--fw-semibold);
+    color: var(--color-navy);
+    background: var(--color-surface);
+  }
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+  tr.off {
+    opacity: 0.55;
+  }
+  .right {
+    text-align: right;
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-full);
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-bold);
+  }
+  .badge.on {
+    color: var(--color-success);
+    background: rgb(28 191 192 / 0.14);
+  }
+  .badge.no {
+    color: var(--color-muted);
+    background: var(--color-surface);
+  }
+  .action {
+    color: var(--color-teal-dim);
+    font-weight: var(--fw-semibold);
+    text-decoration: none;
+    margin-right: var(--space-3);
+  }
+  .action:hover {
+    text-decoration: underline;
+  }
+  .inline {
+    display: inline;
+    margin-left: var(--space-3);
+  }
+  .linkbtn {
+    font: inherit;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
+    color: var(--color-muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+  }
+  .linkbtn:hover {
+    color: var(--color-navy);
+    text-decoration: underline;
+  }
+  .empty {
+    text-align: center;
+    color: var(--color-muted);
+    padding: var(--space-8);
+    white-space: normal;
+  }
+</style>

@@ -1,0 +1,186 @@
+---
+export const prerender = false;
+
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import VendedorForm from '@/components/admin/VendedorForm.astro';
+import { esOwner } from '@/lib/auth';
+import { createAdminClient } from '@/lib/supabase';
+import { parseVendedorNuevo, armarPermisos, generarPasswordTemporal } from '@/lib/admin/vendedores';
+
+const admin = Astro.locals.admin!;
+if (!esOwner(admin)) {
+  return new Response('No autorizado', { status: 403 });
+}
+
+const svc = createAdminClient();
+
+let errors: string[] = [];
+let previo: Record<string, unknown> = {};
+// Al crear con éxito NO redirigimos: mostramos la contraseña temporal UNA vez.
+let creado: { email: string; password: string } | null = null;
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const result = parseVendedorNuevo(form);
+  if ('errors' in result) {
+    errors = result.errors;
+    previo = Object.fromEntries(form.entries());
+  } else {
+    const d = result.data;
+    const password = generarPasswordTemporal();
+
+    // 1) Crear la cuenta de Auth (email ya confirmado: no dependemos de correo).
+    const { data: creada, error: authErr } = await svc.auth.admin.createUser({
+      email: d.email,
+      password,
+      email_confirm: true,
+    });
+
+    if (authErr || !creada?.user) {
+      errors = [
+        /already been registered|already exists/i.test(authErr?.message ?? '')
+          ? 'Ya existe una cuenta con ese correo.'
+          : `No se pudo crear la cuenta: ${authErr?.message ?? 'error desconocido'}`,
+      ];
+      previo = Object.fromEntries(form.entries());
+    } else {
+      // 2) Crear la ficha en admin_users (rol vendedor). Si falla, revertir el
+      //    usuario de Auth para no dejar una cuenta huérfana sin ficha.
+      const { error: filaErr } = await svc.from('admin_users').insert({
+        id: creada.user.id,
+        rol: 'vendedor',
+        nombre: d.nombre,
+        activo: true,
+        comision_tipo: d.comision_tipo,
+        comision_valor: d.comision_valor,
+        permisos: armarPermisos(d),
+      });
+
+      if (filaErr) {
+        await svc.auth.admin.deleteUser(creada.user.id);
+        errors = [`No se pudo guardar la ficha del vendedor: ${filaErr.message}`];
+        previo = Object.fromEntries(form.entries());
+      } else {
+        creado = { email: d.email, password };
+      }
+    }
+  }
+}
+---
+
+<AdminLayout title="Nuevo vendedor" active="vendedores">
+  <p class="crumbs"><a href="/admin/vendedores">Vendedores</a> › Nuevo</p>
+
+  {
+    creado ? (
+      <div class="exito">
+        <h2>✓ Vendedor creado</h2>
+        <p>
+          Comparte estos datos con el vendedor por un canal seguro (WhatsApp, en persona).
+          <strong>Esta contraseña se muestra solo una vez</strong>; el vendedor debería cambiarla al entrar.
+        </p>
+        <dl class="cred">
+          <dt>Correo</dt>
+          <dd>{creado.email}</dd>
+          <dt>Contraseña temporal</dt>
+          <dd class="pwd">{creado.password}</dd>
+        </dl>
+        <div class="acciones">
+          <a class="btn" href="/admin/vendedores">Volver al listado</a>
+          <a class="btn ghost" href="/admin/vendedores/nuevo">Crear otro</a>
+        </div>
+      </div>
+    ) : (
+      <VendedorForm
+        vendedor={previo}
+        action="/admin/vendedores/nuevo"
+        submitLabel="Crear vendedor"
+        cancelHref="/admin/vendedores"
+        esNuevo={true}
+        errors={errors}
+      />
+    )
+  }
+</AdminLayout>
+
+<style>
+  .crumbs {
+    margin: 0 0 var(--space-4);
+    font-size: var(--fs-sm);
+    color: var(--color-muted);
+  }
+  .crumbs a {
+    color: var(--color-teal-dim);
+    text-decoration: none;
+  }
+  .crumbs a:hover {
+    text-decoration: underline;
+  }
+  .exito {
+    max-width: 520px;
+    padding: var(--space-6);
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+  }
+  .exito h2 {
+    margin: 0 0 var(--space-3);
+    font-family: var(--font-display);
+    color: var(--color-success);
+  }
+  .exito p {
+    margin: 0 0 var(--space-4);
+    font-size: var(--fs-sm);
+  }
+  .cred {
+    margin: 0 0 var(--space-5);
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-2) var(--space-4);
+    align-items: baseline;
+  }
+  .cred dt {
+    font-weight: var(--fw-bold);
+    font-size: var(--fs-sm);
+    color: var(--color-muted);
+  }
+  .cred dd {
+    margin: 0;
+    font-size: var(--fs-sm);
+  }
+  .cred .pwd {
+    font-family: var(--font-mono, monospace);
+    font-size: var(--fs-h3);
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.06em;
+    color: var(--color-navy);
+    background: var(--color-surface);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius);
+    display: inline-block;
+  }
+  .acciones {
+    display: flex;
+    gap: var(--space-4);
+  }
+  .btn {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-bold);
+    color: var(--color-white);
+    background: var(--color-cta);
+    padding: var(--space-3) var(--space-6);
+    border-radius: var(--radius);
+    text-decoration: none;
+  }
+  .btn:hover {
+    background: var(--color-coral-dim);
+  }
+  .btn.ghost {
+    color: var(--color-navy);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+  }
+  .btn.ghost:hover {
+    background: var(--color-border);
+  }
+</style>

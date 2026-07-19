@@ -1,0 +1,154 @@
+---
+export const prerender = false;
+
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import VendedorForm from '@/components/admin/VendedorForm.astro';
+import { esOwner } from '@/lib/auth';
+import { createAdminClient } from '@/lib/supabase';
+import { parseVendedorEditar, armarPermisos, generarPasswordTemporal } from '@/lib/admin/vendedores';
+
+const { id } = Astro.params;
+const admin = Astro.locals.admin!;
+if (!esOwner(admin)) {
+  return new Response('No autorizado', { status: 403 });
+}
+
+const svc = createAdminClient();
+
+let errors: string[] = [];
+let nuevaPwd: string | null = null;
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const accion = form.get('accion');
+
+  if (accion === 'reset_pwd') {
+    const pwd = generarPasswordTemporal();
+    const { error } = await svc.auth.admin.updateUserById(String(id), { password: pwd });
+    if (error) errors = [`No se pudo restablecer la contraseña: ${error.message}`];
+    else nuevaPwd = pwd;
+  } else {
+    const result = parseVendedorEditar(form);
+    if ('errors' in result) {
+      errors = result.errors;
+    } else {
+      const d = result.data;
+      const { error } = await svc
+        .from('admin_users')
+        .update({
+          nombre: d.nombre,
+          comision_tipo: d.comision_tipo,
+          comision_valor: d.comision_valor,
+          permisos: armarPermisos(d),
+        })
+        .eq('id', id)
+        .eq('rol', 'vendedor');
+      if (error) errors = [`No se pudo guardar: ${error.message}`];
+      else return Astro.redirect('/admin/vendedores');
+    }
+  }
+}
+
+const { data: vendedor } = await svc
+  .from('admin_users')
+  .select('id, nombre, activo, comision_tipo, comision_valor, permisos')
+  .eq('id', id)
+  .eq('rol', 'vendedor')
+  .maybeSingle();
+
+const { data: authUser } = vendedor ? await svc.auth.admin.getUserById(String(id)) : { data: null };
+const email = authUser?.user?.email ?? '—';
+---
+
+{
+  !vendedor ? (
+    <AdminLayout title="Vendedor no encontrado" active="vendedores">
+      <p>Ese vendedor no existe. <a href="/admin/vendedores">Volver</a>.</p>
+    </AdminLayout>
+  ) : (
+    <AdminLayout title={`Editar: ${vendedor.nombre ?? email}`} active="vendedores">
+      <p class="crumbs"><a href="/admin/vendedores">Vendedores</a> › Editar</p>
+      <p class="email-line">Correo: <strong>{email}</strong> (no se puede cambiar)</p>
+
+      {
+        nuevaPwd && (
+          <div class="pwd-box">
+            <p>Nueva contraseña temporal (se muestra solo una vez):</p>
+            <p class="pwd">{nuevaPwd}</p>
+          </div>
+        )
+      }
+
+      <VendedorForm
+        vendedor={vendedor}
+        action={`/admin/vendedores/${id}`}
+        submitLabel="Guardar cambios"
+        cancelHref="/admin/vendedores"
+        esNuevo={false}
+        errors={errors}
+      />
+
+      <form method="POST" class="reset" onsubmit="return confirm('¿Generar una nueva contraseña temporal para este vendedor? La actual dejará de funcionar.')">
+        <input type="hidden" name="accion" value="reset_pwd" />
+        <button type="submit">Restablecer contraseña</button>
+      </form>
+    </AdminLayout>
+  )
+}
+
+<style>
+  .crumbs {
+    margin: 0 0 var(--space-4);
+    font-size: var(--fs-sm);
+    color: var(--color-muted);
+  }
+  .crumbs a {
+    color: var(--color-teal-dim);
+    text-decoration: none;
+  }
+  .crumbs a:hover {
+    text-decoration: underline;
+  }
+  .email-line {
+    margin: 0 0 var(--space-5);
+    font-size: var(--fs-sm);
+    color: var(--color-muted);
+  }
+  .pwd-box {
+    max-width: 520px;
+    margin: 0 0 var(--space-5);
+    padding: var(--space-4);
+    background: var(--color-white);
+    border: 1px solid var(--color-gold);
+    border-radius: var(--radius);
+  }
+  .pwd-box p {
+    margin: 0 0 var(--space-2);
+    font-size: var(--fs-sm);
+  }
+  .pwd-box .pwd {
+    font-family: var(--font-mono, monospace);
+    font-size: var(--fs-h3);
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.06em;
+    color: var(--color-navy);
+    margin: 0;
+  }
+  .reset {
+    margin-top: var(--space-6);
+  }
+  .reset button {
+    font: inherit;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
+    color: var(--color-navy);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: var(--space-2) var(--space-4);
+    cursor: pointer;
+  }
+  .reset button:hover {
+    background: var(--color-border);
+  }
+</style>

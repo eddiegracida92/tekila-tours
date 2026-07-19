@@ -1,0 +1,23 @@
+-- =====================================================================
+-- Step 9.5 (seguridad) — Blindar PR/margen en `reservas` (Capa 1)
+-- =====================================================================
+-- Antes de crear la primera cuenta NO-owner (staff/vendedor), cerramos el
+-- último frente del PR: la tabla `reservas` guarda `costo_total_pr` (suma de
+-- PR = costo) y `margen` (total − PR). Un vendedor/staff autenticado tiene
+-- SELECT sobre `reservas` (para ver reservas: el vendedor solo las suyas vía
+-- `reservas_read`), así que por la API directa podría pedir esas dos columnas
+-- y leer el PR/margen. La Regla #5 exige que el PR nunca salga salvo permiso.
+--
+-- Mismo patrón que `tarifas` (Step 9.3a, Capa 1): revocar el SELECT de esas
+-- columnas al rol `authenticated`. Nadie autenticado puede leerlas de la tabla
+-- cruda ni por API directa. El owner las consultará vía service_role (o una
+-- vista/función definer con `puede_ver_pr()` en el dashboard 9.4).
+--
+-- No rompe nada actual: /api/checkout y el webhook escriben esas columnas con
+-- service_role (que ignora GRANTs de columna); el público nunca lee `reservas`;
+-- y ninguna pantalla del panel de hoy muestra PR/margen de reservas.
+--
+-- Reversible: `grant select (costo_total_pr, margen) on reservas to authenticated;`
+-- =====================================================================
+
+revoke select (costo_total_pr, margen) on reservas from authenticated;

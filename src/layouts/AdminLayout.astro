@@ -10,15 +10,16 @@ interface Props {
 const { title, active = 'dashboard' } = Astro.props;
 const admin = Astro.locals.admin;
 
-// Nav del panel. Solo "Dashboard" existe en 9.1; el resto llega en 9.2–9.4
-// y se muestra como "próximamente" para dejar ver la estructura sin romper.
+// Nav del panel. `ownerOnly` oculta la sección al staff (hoy solo existe el
+// owner). El dashboard de ventas/margen (9.4) sigue como "próximamente".
+const esOwnerRol = admin?.rol === 'owner';
 const nav = [
-  { key: 'dashboard', label: 'Dashboard', href: '/admin', ready: true },
-  { key: 'tours', label: 'Tours y tarifas', href: '/admin/tours', ready: true },
-  { key: 'temporadas', label: 'Temporadas', href: '/admin/temporadas', ready: true },
-  { key: 'reservas', label: 'Reservas', href: '/admin/reservas', ready: false },
-  { key: 'vendedores', label: 'Vendedores', href: '/admin/vendedores', ready: false },
-] as const;
+  { key: 'dashboard', label: 'Dashboard', href: '/admin', ready: true, ownerOnly: false },
+  { key: 'tours', label: 'Tours y tarifas', href: '/admin/tours', ready: true, ownerOnly: false },
+  { key: 'temporadas', label: 'Temporadas', href: '/admin/temporadas', ready: true, ownerOnly: false },
+  { key: 'reservas', label: 'Reservas', href: '/admin/reservas', ready: true, ownerOnly: false },
+  { key: 'vendedores', label: 'Vendedores', href: '/admin/vendedores', ready: true, ownerOnly: true },
+].filter((item) => !item.ownerOnly || esOwnerRol);
 ---
 
 <!doctype html>
