@@ -25,14 +25,16 @@ if (Astro.request.method === 'POST') {
     if (signInError || !data.user) {
       error = 'Correo o contraseña incorrectos.';
     } else {
-      // Autenticó en Supabase; falta confirmar que sea admin activo.
+      // Autenticó en Supabase; falta confirmar que sea personal de gestión
+      // (owner/staff) activo. Un 'vendedor' no entra aquí: su portal es
+      // `/vendedor/*` (Step 9.5 UI).
       const { data: perfil } = await supabase
         .from('admin_users')
-        .select('activo')
+        .select('rol, activo')
         .eq('id', data.user.id)
         .maybeSingle();
 
-      if (!perfil || !perfil.activo) {
+      if (!perfil || !perfil.activo || perfil.rol === 'vendedor') {
         await supabase.auth.signOut();
         error = 'Esta cuenta no tiene acceso al panel.';
       } else {
