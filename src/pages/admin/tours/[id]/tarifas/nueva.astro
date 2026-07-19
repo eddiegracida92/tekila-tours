@@ -1,0 +1,75 @@
+---
+export const prerender = false;
+
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import TarifaForm from '@/components/admin/TarifaForm.astro';
+import { createServerSupabase, esOwner, puedeVerPr } from '@/lib/auth';
+import { parseTarifaForm } from '@/lib/admin/tarifas';
+
+const { id } = Astro.params;
+const admin = Astro.locals.admin!;
+const owner = esOwner(admin);
+const supabase = createServerSupabase(Astro.request, Astro.cookies);
+
+let errors: string[] = [];
+let previo: Record<string, unknown> = {};
+
+if (Astro.request.method === 'POST') {
+  if (!owner) {
+    errors = ['Solo el owner puede crear tarifas.'];
+  } else {
+    const form = await Astro.request.formData();
+    const result = parseTarifaForm(form);
+    if ('errors' in result) {
+      errors = result.errors;
+      previo = Object.fromEntries(form.entries());
+    } else {
+      const { error } = await supabase.from('tarifas').insert({ ...result.data, tour_id: id });
+      if (error) {
+        errors = [`No se pudo crear: ${error.message}`];
+        previo = result.data as Record<string, unknown>;
+      } else {
+        return Astro.redirect(`/admin/tours/${id}/tarifas`);
+      }
+    }
+  }
+}
+
+const { data: tour } = await supabase.from('tours').select('nombre_es').eq('id', id).maybeSingle();
+---
+
+<AdminLayout title={`Nueva tarifa: ${tour?.nombre_es ?? ''}`} active="tours">
+  <p class="crumbs">
+    <a href="/admin/tours">Tours</a> ›
+    <a href={`/admin/tours/${id}/tarifas`}>Tarifas</a> › Nueva
+  </p>
+  {
+    owner ? (
+      <TarifaForm
+        tarifa={previo}
+        action={`/admin/tours/${id}/tarifas/nueva`}
+        submitLabel="Crear tarifa"
+        cancelHref={`/admin/tours/${id}/tarifas`}
+        verPR={puedeVerPr(admin)}
+        errors={errors}
+      />
+    ) : (
+      <p>Solo el owner puede crear tarifas.</p>
+    )
+  }
+</AdminLayout>
+
+<style>
+  .crumbs {
+    margin: 0 0 var(--space-4);
+    font-size: var(--fs-sm);
+    color: var(--color-muted);
+  }
+  .crumbs a {
+    color: var(--color-teal-dim);
+    text-decoration: none;
+  }
+  .crumbs a:hover {
+    text-decoration: underline;
+  }
+</style>

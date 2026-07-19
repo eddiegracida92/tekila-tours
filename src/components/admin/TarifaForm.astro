@@ -1,0 +1,271 @@
+---
+/**
+ * Formulario de alta/edición de una tarifa (Step 9.3a). Server-side puro.
+ * El PR solo se renderiza si `verPR` (owner o permiso). Escribe solo owner.
+ */
+import { AUDIENCIAS, TEMPORADAS, MONEDAS } from '@/lib/admin/tarifas';
+
+interface Props {
+  tarifa?: Record<string, any>;
+  action: string;
+  submitLabel: string;
+  cancelHref: string;
+  verPR: boolean;
+  errors?: string[];
+}
+
+const { tarifa = {}, action, submitLabel, cancelHref, verPR, errors = [] } = Astro.props;
+const val = (k: string, d: string | number = '') => (tarifa[k] ?? d) as string | number;
+---
+
+<form class="tarifa-form" method="POST" action={action}>
+  {
+    errors.length > 0 && (
+      <ul class="errors" role="alert">
+        {errors.map((e) => (
+          <li>{e}</li>
+        ))}
+      </ul>
+    )
+  }
+
+  <div class="grid">
+    <label>
+      <span>Audiencia</span>
+      <select name="audiencia">
+        {
+          AUDIENCIAS.map((a) => (
+            <option value={a} selected={tarifa.audiencia === a}>
+              {a === 'nacional' ? 'Nacional' : 'Extranjero'}
+            </option>
+          ))
+        }
+      </select>
+    </label>
+    <label>
+      <span>Temporada</span>
+      <select name="temporada">
+        {
+          TEMPORADAS.map((tp) => (
+            <option value={tp} selected={(tarifa.temporada ?? 'unica') === tp}>
+              {tp === 'unica' ? 'Única' : tp === 'baja' ? 'Baja' : 'Alta'}
+            </option>
+          ))
+        }
+      </select>
+    </label>
+    <label>
+      <span>Moneda</span>
+      <select name="moneda">
+        {
+          MONEDAS.map((m) => (
+            <option value={m} selected={tarifa.moneda === m}>
+              {m}
+            </option>
+          ))
+        }
+      </select>
+    </label>
+    <label>
+      <span>Operador / variante</span>
+      <input name="operador_variante" value={val('operador_variante')} />
+    </label>
+    <label>
+      <span>Modalidad</span>
+      <input name="modalidad" value={val('modalidad')} />
+    </label>
+  </div>
+
+  <fieldset>
+    <legend>Precio público (PP) — lo que paga el cliente</legend>
+    <div class="grid">
+      <label>
+        <span>PP adulto</span>
+        <input type="number" step="0.01" min="0" name="pp_adulto" value={val('pp_adulto')} required />
+      </label>
+      <label>
+        <span>PP menor (opcional)</span>
+        <input type="number" step="0.01" min="0" name="pp_menor" value={val('pp_menor')} />
+      </label>
+    </div>
+  </fieldset>
+
+  {
+    verPR ? (
+      <fieldset class="pr">
+        <legend>Precio reporte (PR) — costo · confidencial</legend>
+        <div class="grid">
+          <label>
+            <span>PR adulto</span>
+            <input type="number" step="0.01" min="0" name="pr_adulto" value={val('pr_adulto')} required />
+          </label>
+          <label>
+            <span>PR menor (opcional)</span>
+            <input type="number" step="0.01" min="0" name="pr_menor" value={val('pr_menor')} />
+          </label>
+        </div>
+        <p class="hint">El PR nunca se muestra al público ni a quien no tenga permiso.</p>
+      </fieldset>
+    ) : (
+      <p class="no-pr">No tienes permiso para ver ni editar el PR de esta tarifa.</p>
+    )
+  }
+
+  <fieldset>
+    <legend>Impuestos</legend>
+    <div class="grid">
+      <label>
+        <span>Impuesto adulto</span>
+        <input type="number" step="0.01" min="0" name="impuesto_adulto" value={val('impuesto_adulto', 0)} />
+      </label>
+      <label>
+        <span>Impuesto menor</span>
+        <input type="number" step="0.01" min="0" name="impuesto_menor" value={val('impuesto_menor', 0)} />
+      </label>
+      <label>
+        <span>Moneda del impuesto</span>
+        <select name="impuesto_moneda">
+          <option value="" selected={!tarifa.impuesto_moneda}>—</option>
+          {
+            MONEDAS.map((m) => (
+              <option value={m} selected={tarifa.impuesto_moneda === m}>
+                {m}
+              </option>
+            ))
+          }
+        </select>
+      </label>
+    </div>
+  </fieldset>
+
+  <label class="full">
+    <span>Notas</span>
+    <textarea name="notas" rows="2">{val('notas')}</textarea>
+  </label>
+
+  <label class="switch">
+    <input type="checkbox" name="activo" checked={tarifa.activo ?? true} />
+    <span>Activa</span>
+  </label>
+
+  <div class="actions">
+    <a href={cancelHref} class="cancel">Cancelar</a>
+    <button type="submit">{submitLabel}</button>
+  </div>
+</form>
+
+<style>
+  .tarifa-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5, 1.25rem);
+    max-width: 760px;
+  }
+  .errors {
+    margin: 0;
+    padding: var(--space-4) var(--space-4) var(--space-4) var(--space-8);
+    background: var(--color-destructive);
+    color: var(--color-white);
+    border-radius: var(--radius);
+    font-size: var(--fs-sm);
+  }
+  fieldset {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: var(--space-4);
+    margin: 0;
+  }
+  fieldset.pr {
+    border-color: var(--color-gold);
+    background: rgb(212 171 59 / 0.06);
+  }
+  legend {
+    font-weight: var(--fw-bold);
+    font-size: var(--fs-sm);
+    color: var(--color-navy);
+    padding: 0 var(--space-2);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--space-4);
+  }
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
+  }
+  label.full {
+    width: 100%;
+  }
+  input,
+  select,
+  textarea {
+    font: inherit;
+    font-weight: var(--fw-regular);
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-sand);
+  }
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid var(--color-teal);
+    outline-offset: 1px;
+  }
+  .hint {
+    margin: var(--space-2) 0 0;
+    font-size: var(--fs-xs);
+    color: var(--color-gold-dim);
+    font-weight: var(--fw-semibold);
+  }
+  .no-pr {
+    margin: 0;
+    padding: var(--space-3);
+    background: var(--color-surface);
+    border-radius: var(--radius);
+    font-size: var(--fs-sm);
+    color: var(--color-muted);
+  }
+  .switch {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .switch input {
+    width: 1.1rem;
+    height: 1.1rem;
+    accent-color: var(--color-teal);
+  }
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: var(--space-4);
+  }
+  .cancel {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
+    color: var(--color-muted);
+    text-decoration: none;
+  }
+  .cancel:hover {
+    color: var(--color-navy);
+  }
+  button {
+    font: inherit;
+    font-weight: var(--fw-bold);
+    padding: var(--space-3) var(--space-8);
+    color: var(--color-white);
+    background: var(--color-cta);
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+  }
+  button:hover {
+    background: var(--color-coral-dim);
+  }
+</style>

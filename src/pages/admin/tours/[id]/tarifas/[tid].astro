@@ -1,0 +1,85 @@
+---
+export const prerender = false;
+
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import TarifaForm from '@/components/admin/TarifaForm.astro';
+import { createServerSupabase, esOwner, puedeVerPr } from '@/lib/auth';
+import { parseTarifaForm } from '@/lib/admin/tarifas';
+
+const { id, tid } = Astro.params;
+const admin = Astro.locals.admin!;
+const owner = esOwner(admin);
+const supabase = createServerSupabase(Astro.request, Astro.cookies);
+
+let errors: string[] = [];
+
+if (Astro.request.method === 'POST') {
+  if (!owner) {
+    errors = ['Solo el owner puede editar tarifas.'];
+  } else {
+    const form = await Astro.request.formData();
+    const result = parseTarifaForm(form);
+    if ('errors' in result) {
+      errors = result.errors;
+    } else {
+      const { error } = await supabase.from('tarifas').update(result.data).eq('id', tid);
+      if (error) {
+        errors = [`No se pudo guardar: ${error.message}`];
+      } else {
+        return Astro.redirect(`/admin/tours/${id}/tarifas`);
+      }
+    }
+  }
+}
+
+// Lectura vía la vista curada (el PR llega solo si el admin puede verlo).
+const { data: tarifa } = await supabase.from('tarifas_admin').select('*').eq('id', tid).maybeSingle();
+const { data: tour } = await supabase.from('tours').select('nombre_es').eq('id', id).maybeSingle();
+---
+
+{
+  !tarifa ? (
+    <AdminLayout title="Tarifa no encontrada" active="tours">
+      <p>Esa tarifa no existe. <a href={`/admin/tours/${id}/tarifas`}>Volver</a>.</p>
+    </AdminLayout>
+  ) : (
+    <AdminLayout title={`Editar tarifa: ${tour?.nombre_es ?? ''}`} active="tours">
+      <p class="crumbs">
+        <a href="/admin/tours">Tours</a> ›
+        <a href={`/admin/tours/${id}/tarifas`}>Tarifas</a> › Editar
+      </p>
+      {!owner && <p class="warn">Solo el owner puede guardar cambios; el formulario es de solo lectura.</p>}
+      <TarifaForm
+        tarifa={tarifa}
+        action={`/admin/tours/${id}/tarifas/${tid}`}
+        submitLabel="Guardar cambios"
+        cancelHref={`/admin/tours/${id}/tarifas`}
+        verPR={puedeVerPr(admin)}
+        errors={errors}
+      />
+    </AdminLayout>
+  )
+}
+
+<style>
+  .crumbs {
+    margin: 0 0 var(--space-4);
+    font-size: var(--fs-sm);
+    color: var(--color-muted);
+  }
+  .crumbs a {
+    color: var(--color-teal-dim);
+    text-decoration: none;
+  }
+  .crumbs a:hover {
+    text-decoration: underline;
+  }
+  .warn {
+    margin: 0 0 var(--space-4);
+    padding: var(--space-3);
+    background: var(--color-surface);
+    border-left: 3px solid var(--color-gold);
+    border-radius: var(--radius);
+    font-size: var(--fs-sm);
+  }
+</style>

@@ -42,6 +42,9 @@ const { data: tour } = await supabase.from('tours').select('*').eq('id', id).may
     </AdminLayout>
   ) : (
     <AdminLayout title={`Editar: ${tour.nombre_es}`} active="tours">
+      <p class="subnav">
+        <a class="tarifas-link" href={`/admin/tours/${id}/tarifas`}>💲 Gestionar tarifas de este tour →</a>
+      </p>
       <TourForm
         tour={tour}
         action={`/admin/tours/${id}`}
@@ -51,3 +54,22 @@ const { data: tour } = await supabase.from('tours').select('*').eq('id', id).may
     </AdminLayout>
   )
 }
+
+<style>
+  .subnav {
+    margin: 0 0 var(--space-6);
+  }
+  .tarifas-link {
+    display: inline-block;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-bold);
+    color: var(--color-teal-dim);
+    text-decoration: none;
+    padding: var(--space-2) var(--space-4);
+    background: var(--color-surface);
+    border-radius: var(--radius);
+  }
+  .tarifas-link:hover {
+    background: var(--color-border);
+  }
+</style>

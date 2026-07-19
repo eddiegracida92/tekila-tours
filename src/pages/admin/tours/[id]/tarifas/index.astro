@@ -1,0 +1,287 @@
+---
+export const prerender = false;
+
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import { createServerSupabase, esOwner, puedeVerPr } from '@/lib/auth';
+
+const { id } = Astro.params;
+const admin = Astro.locals.admin!;
+const verPR = puedeVerPr(admin);
+const owner = esOwner(admin);
+const supabase = createServerSupabase(Astro.request, Astro.cookies);
+
+let aviso: string | null = null;
+
+// Acciones desde el listado: toggle activo / eliminar. SOLO owner.
+if (Astro.request.method === 'POST') {
+  if (!owner) {
+    aviso = 'Solo el owner puede modificar tarifas.';
+  } else {
+    const form = await Astro.request.formData();
+    const accion = form.get('accion');
+    const tid = String(form.get('tid') ?? '');
+    if (tid && accion === 'toggle') {
+      const activar = form.get('activar') === '1';
+      const { error } = await supabase.from('tarifas').update({ activo: activar }).eq('id', tid);
+      aviso = error ? 'No se pudo cambiar el estado.' : activar ? 'Tarifa activada.' : 'Tarifa desactivada.';
+    } else if (tid && accion === 'eliminar') {
+      const { error } = await supabase.from('tarifas').delete().eq('id', tid);
+      aviso = error ? 'No se pudo eliminar.' : 'Tarifa eliminada.';
+    }
+  }
+}
+
+const { data: tour } = await supabase.from('tours').select('id, nombre_es').eq('id', id).maybeSingle();
+
+// Lectura vía la vista curada: el PR llega solo si `verPR` (candado en la BD).
+const { data: tarifas } = await supabase
+  .from('tarifas_admin')
+  .select('*')
+  .eq('tour_id', id)
+  .order('audiencia', { ascending: true })
+  .order('temporada', { ascending: true });
+
+const money = (v: number | null, m: string) => (v == null ? '—' : `${m} ${Number(v).toFixed(2)}`);
+---
+
+{
+  !tour ? (
+    <AdminLayout title="Tour no encontrado" active="tours">
+      <p>Ese tour no existe. <a href="/admin/tours">Volver</a>.</p>
+    </AdminLayout>
+  ) : (
+    <AdminLayout title={`Tarifas: ${tour.nombre_es}`} active="tours">
+      <p class="crumbs">
+        <a href="/admin/tours">Tours</a> ›
+        <a href={`/admin/tours/${id}`}>{tour.nombre_es}</a> › Tarifas
+      </p>
+
+      <div class="head">
+        <p class="count">{tarifas?.length ?? 0} tarifas</p>
+        {owner && (
+          <a class="new" href={`/admin/tours/${id}/tarifas/nueva`}>
+            + Nueva tarifa
+          </a>
+        )}
+      </div>
+
+      {aviso && <p class="aviso">{aviso}</p>}
+      {!verPR && (
+        <p class="pr-note">Estás viendo solo el precio público (PP). El PR está oculto por permisos.</p>
+      )}
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Audiencia</th>
+              <th>Temporada</th>
+              <th>Moneda</th>
+              <th class="num">PP adulto</th>
+              <th class="num">PP menor</th>
+              {verPR && <th class="num pr">PR adulto</th>}
+              {verPR && <th class="num pr">PR menor</th>}
+              <th>Estado</th>
+              {owner && <th class="right">Acciones</th>}
+            </tr>
+          </thead>
+          <tbody>
+            {(tarifas ?? []).map((t) => (
+              <tr class:list={[{ off: !t.activo }]}>
+                <td>{t.audiencia}</td>
+                <td>{t.temporada}</td>
+                <td>{t.moneda}</td>
+                <td class="num">{money(t.pp_adulto, t.moneda)}</td>
+                <td class="num">{money(t.pp_menor, t.moneda)}</td>
+                {verPR && <td class="num pr">{money(t.pr_adulto, t.moneda)}</td>}
+                {verPR && <td class="num pr">{money(t.pr_menor, t.moneda)}</td>}
+                <td>
+                  <span class:list={['badge', t.activo ? 'on' : 'no']}>
+                    {t.activo ? 'Activa' : 'Inactiva'}
+                  </span>
+                </td>
+                {owner && (
+                  <td class="right">
+                    <a class="action" href={`/admin/tours/${id}/tarifas/${t.id}`}>
+                      Editar
+                    </a>
+                    <form method="POST" class="inline">
+                      <input type="hidden" name="accion" value="toggle" />
+                      <input type="hidden" name="tid" value={t.id} />
+                      <input type="hidden" name="activar" value={t.activo ? '0' : '1'} />
+                      <button type="submit" class="linkbtn">
+                        {t.activo ? 'Desactivar' : 'Activar'}
+                      </button>
+                    </form>
+                    <form method="POST" class="inline" onsubmit="return confirm('¿Eliminar esta tarifa? No se puede deshacer.')">
+                      <input type="hidden" name="accion" value="eliminar" />
+                      <input type="hidden" name="tid" value={t.id} />
+                      <button type="submit" class="linkbtn danger">
+                        Eliminar
+                      </button>
+                    </form>
+                  </td>
+                )}
+              </tr>
+            ))}
+            {(tarifas ?? []).length === 0 && (
+              <tr>
+                <td colspan={verPR ? (owner ? 9 : 8) : owner ? 7 : 6} class="empty">
+                  Este tour aún no tiene tarifas.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </AdminLayout>
+  )
+}
+
+<style>
+  .crumbs {
+    margin: 0 0 var(--space-4);
+    font-size: var(--fs-sm);
+    color: var(--color-muted);
+  }
+  .crumbs a {
+    color: var(--color-teal-dim);
+    text-decoration: none;
+  }
+  .crumbs a:hover {
+    text-decoration: underline;
+  }
+  .head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+  }
+  .count {
+    margin: 0;
+    color: var(--color-muted);
+    font-size: var(--fs-sm);
+  }
+  .new {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-bold);
+    color: var(--color-white);
+    background: var(--color-cta);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius);
+    text-decoration: none;
+  }
+  .new:hover {
+    background: var(--color-coral-dim);
+  }
+  .aviso {
+    margin: 0 0 var(--space-4);
+    padding: var(--space-3);
+    background: var(--color-surface);
+    border-left: 3px solid var(--color-teal);
+    border-radius: var(--radius);
+    font-size: var(--fs-sm);
+  }
+  .pr-note {
+    margin: 0 0 var(--space-4);
+    padding: var(--space-3);
+    background: var(--color-surface);
+    border-radius: var(--radius);
+    font-size: var(--fs-sm);
+    color: var(--color-muted);
+  }
+  .table-wrap {
+    overflow-x: auto;
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--fs-sm);
+  }
+  th,
+  td {
+    text-align: left;
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+    white-space: nowrap;
+  }
+  th {
+    font-family: var(--font-display);
+    font-weight: var(--fw-semibold);
+    color: var(--color-navy);
+    background: var(--color-surface);
+  }
+  .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  th.pr,
+  td.pr {
+    background: rgb(212 171 59 / 0.08);
+    color: var(--color-gold-dim);
+  }
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+  tr.off {
+    opacity: 0.55;
+  }
+  .right {
+    text-align: right;
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-full);
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-bold);
+  }
+  .badge.on {
+    color: var(--color-success);
+    background: rgb(28 191 192 / 0.14);
+  }
+  .badge.no {
+    color: var(--color-muted);
+    background: var(--color-surface);
+  }
+  .action {
+    color: var(--color-teal-dim);
+    font-weight: var(--fw-semibold);
+    text-decoration: none;
+    margin-right: var(--space-3);
+  }
+  .action:hover {
+    text-decoration: underline;
+  }
+  .inline {
+    display: inline;
+    margin-left: var(--space-3);
+  }
+  .linkbtn {
+    font: inherit;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
+    color: var(--color-muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+  }
+  .linkbtn:hover {
+    color: var(--color-navy);
+    text-decoration: underline;
+  }
+  .linkbtn.danger:hover {
+    color: var(--color-destructive);
+  }
+  .empty {
+    text-align: center;
+    color: var(--color-muted);
+    padding: var(--space-8);
+    white-space: normal;
+  }
+</style>

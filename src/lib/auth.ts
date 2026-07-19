@@ -93,3 +93,18 @@ export async function getAdminSession(
     permisos: (data.permisos ?? {}) as Record<string, unknown>,
   };
 }
+
+/** ¿Es owner? (único rol que edita tarifas y siempre ve el PR). */
+export function esOwner(admin: AdminProfile | null): boolean {
+  return admin?.rol === 'owner';
+}
+
+/**
+ * ¿Puede ver el PR? Owner siempre; vendedor solo con `permisos.puede_ver_pr`.
+ * Espejo en el servidor de la función SQL `puede_ver_pr()` — el candado real
+ * vive en la BD (vista `tarifas_admin`); esto decide qué pinta el panel.
+ */
+export function puedeVerPr(admin: AdminProfile | null): boolean {
+  if (!admin) return false;
+  return admin.rol === 'owner' || admin.permisos?.puede_ver_pr === true;
+}
