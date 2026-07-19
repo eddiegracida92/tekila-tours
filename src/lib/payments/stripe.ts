@@ -77,3 +77,16 @@ export const stripeProvider: PaymentProvider = {
     return { provider: 'stripe', sesionId: session.id, url: session.url };
   },
 };
+
+/**
+ * Verifica la firma de un webhook de Stripe y devuelve el evento tipado.
+ * `rawBody` DEBE ser el cuerpo crudo (texto exacto), no el JSON re-serializado:
+ * la firma se calcula sobre los bytes originales. Lanza si la firma no valida.
+ */
+export function construirEventoWebhook(rawBody: string, signature: string): Stripe.Event {
+  const secret = import.meta.env.STRIPE_WEBHOOK_SECRET;
+  if (!secret) {
+    throw new Error('Falta STRIPE_WEBHOOK_SECRET (secreto, solo servidor). Ver .env.example.');
+  }
+  return getStripe().webhooks.constructEvent(rawBody, signature, secret);
+}
