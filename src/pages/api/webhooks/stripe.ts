@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { createAdminClient } from '@/lib/supabase';
 import { construirEventoWebhook } from '@/lib/payments/stripe';
+import { enviarConfirmacion } from '@/lib/emails/send';
 
 // Ruta on-demand. Único camino para confirmar un pago (regla no negociable #3):
 // Stripe avisa aquí, verificamos la FIRMA, y confirmamos la reserva vía la RPC
@@ -65,6 +66,42 @@ export const POST: APIRoute = async ({ request }) => {
   if (error) {
     // Error transitorio de BD → 500 para que Stripe reintente el aviso.
     return new Response('error_confirmar', { status: 500 });
+  }
+
+  // Correo de confirmación (idempotente). "Toma" el derecho a enviar con un
+  // UPDATE atómico sobre la marca: solo la primera vez (marca en NULL) envía.
+  // Si el evento llega repetido, la marca ya está puesta y no se reenvía.
+  const { data: aEnviar } = await supabase
+    .from('reservas')
+    .update({ email_confirmacion_enviado: new Date().toISOString() })
+    .eq('id', reservaId)
+    .is('email_confirmacion_enviado', null)
+    .select(
+      'folio, fecha, adultos, menores, total, moneda, cliente_email, cliente_nombre, idioma, tours(nombre_es, nombre_en)',
+    )
+    .maybeSingle();
+
+  if (aEnviar) {
+    const tour = Array.isArray(aEnviar.tours) ? aEnviar.tours[0] : aEnviar.tours;
+    const idioma = aEnviar.idioma === 'en' ? 'en' : 'es';
+    const res = await enviarConfirmacion(aEnviar.cliente_email, {
+      folio: aEnviar.folio,
+      tourNombre: (idioma === 'en' ? tour?.nombre_en : tour?.nombre_es) ?? 'Tour',
+      fecha: aEnviar.fecha,
+      adultos: aEnviar.adultos,
+      menores: aEnviar.menores,
+      total: Number(aEnviar.total),
+      moneda: aEnviar.moneda,
+      clienteNombre: aEnviar.cliente_nombre,
+      idioma,
+    });
+    // Si el envío falla, libera la marca para reintentar en el próximo aviso.
+    if (!res.ok) {
+      await supabase
+        .from('reservas')
+        .update({ email_confirmacion_enviado: null })
+        .eq('id', reservaId);
+    }
   }
 
   return new Response('ok', { status: 200 });
