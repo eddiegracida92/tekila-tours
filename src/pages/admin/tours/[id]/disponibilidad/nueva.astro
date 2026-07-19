@@ -1,0 +1,68 @@
+---
+export const prerender = false;
+
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import DisponibilidadForm from '@/components/admin/DisponibilidadForm.astro';
+import { createServerSupabase } from '@/lib/auth';
+import { parseDisponibilidadForm } from '@/lib/admin/disponibilidad';
+
+const { id } = Astro.params;
+const supabase = createServerSupabase(Astro.request, Astro.cookies);
+
+let errors: string[] = [];
+let previo: Record<string, unknown> = {};
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const result = parseDisponibilidadForm(form);
+  if ('errors' in result) {
+    errors = result.errors;
+    previo = Object.fromEntries(form.entries());
+  } else {
+    const { error } = await supabase.from('disponibilidad').insert({ ...result.data, tour_id: id });
+    if (error) {
+      // 23505 = unique_violation → ya existe esa fecha para este tour.
+      errors = [
+        error.code === '23505'
+          ? 'Ya existe una fila de disponibilidad para esa fecha. Edítala en el listado.'
+          : `No se pudo crear: ${error.message}`,
+      ];
+      previo = result.data as Record<string, unknown>;
+    } else {
+      return Astro.redirect(`/admin/tours/${id}/disponibilidad`);
+    }
+  }
+}
+
+const { data: tour } = await supabase.from('tours').select('nombre_es').eq('id', id).maybeSingle();
+---
+
+<AdminLayout title={`Agregar fecha: ${tour?.nombre_es ?? ''}`} active="tours">
+  <p class="crumbs">
+    <a href="/admin/tours">Tours</a> ›
+    <a href={`/admin/tours/${id}/disponibilidad`}>Disponibilidad</a> › Agregar
+  </p>
+  <DisponibilidadForm
+    fila={previo}
+    action={`/admin/tours/${id}/disponibilidad/nueva`}
+    submitLabel="Agregar fecha"
+    cancelHref={`/admin/tours/${id}/disponibilidad`}
+    fechaEditable={true}
+    errors={errors}
+  />
+</AdminLayout>
+
+<style>
+  .crumbs {
+    margin: 0 0 var(--space-4);
+    font-size: var(--fs-sm);
+    color: var(--color-muted);
+  }
+  .crumbs a {
+    color: var(--color-teal-dim);
+    text-decoration: none;
+  }
+  .crumbs a:hover {
+    text-decoration: underline;
+  }
+</style>

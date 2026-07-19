@@ -1,0 +1,73 @@
+---
+export const prerender = false;
+
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import DisponibilidadForm from '@/components/admin/DisponibilidadForm.astro';
+import { createServerSupabase } from '@/lib/auth';
+import { parseDisponibilidadForm } from '@/lib/admin/disponibilidad';
+
+const { id, did } = Astro.params;
+const supabase = createServerSupabase(Astro.request, Astro.cookies);
+
+let errors: string[] = [];
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const result = parseDisponibilidadForm(form);
+  if ('errors' in result) {
+    errors = result.errors;
+  } else {
+    // La fecha no se cambia en edición: solo cupo y bloqueo.
+    const { error } = await supabase
+      .from('disponibilidad')
+      .update({ cupo_total: result.data.cupo_total, bloqueada: result.data.bloqueada })
+      .eq('id', did);
+    if (error) {
+      errors = [`No se pudo guardar: ${error.message}`];
+    } else {
+      return Astro.redirect(`/admin/tours/${id}/disponibilidad`);
+    }
+  }
+}
+
+const { data: fila } = await supabase.from('disponibilidad').select('*').eq('id', did).maybeSingle();
+const { data: tour } = await supabase.from('tours').select('nombre_es').eq('id', id).maybeSingle();
+---
+
+{
+  !fila ? (
+    <AdminLayout title="Fecha no encontrada" active="tours">
+      <p>Esa fecha no existe. <a href={`/admin/tours/${id}/disponibilidad`}>Volver</a>.</p>
+    </AdminLayout>
+  ) : (
+    <AdminLayout title={`Editar fecha: ${tour?.nombre_es ?? ''}`} active="tours">
+      <p class="crumbs">
+        <a href="/admin/tours">Tours</a> ›
+        <a href={`/admin/tours/${id}/disponibilidad`}>Disponibilidad</a> › Editar
+      </p>
+      <DisponibilidadForm
+        fila={fila}
+        action={`/admin/tours/${id}/disponibilidad/${did}`}
+        submitLabel="Guardar cambios"
+        cancelHref={`/admin/tours/${id}/disponibilidad`}
+        fechaEditable={false}
+        errors={errors}
+      />
+    </AdminLayout>
+  )
+}
+
+<style>
+  .crumbs {
+    margin: 0 0 var(--space-4);
+    font-size: var(--fs-sm);
+    color: var(--color-muted);
+  }
+  .crumbs a {
+    color: var(--color-teal-dim);
+    text-decoration: none;
+  }
+  .crumbs a:hover {
+    text-decoration: underline;
+  }
+</style>

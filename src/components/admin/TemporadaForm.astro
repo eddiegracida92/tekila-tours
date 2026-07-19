@@ -1,0 +1,143 @@
+---
+/**
+ * Formulario de alta/edición de una temporada (Step 9.3b). Server-side puro.
+ * Escribe solo el owner (RLS `is_owner()` + guardia en la página).
+ */
+import { TIPOS_TEMPORADA } from '@/lib/admin/temporadas';
+
+interface Props {
+  temporada?: Record<string, any>;
+  action: string;
+  submitLabel: string;
+  cancelHref: string;
+  errors?: string[];
+}
+
+const { temporada = {}, action, submitLabel, cancelHref, errors = [] } = Astro.props;
+const val = (k: string, d: string = '') => (temporada[k] ?? d) as string;
+---
+
+<form class="temporada-form" method="POST" action={action}>
+  {
+    errors.length > 0 && (
+      <ul class="errors" role="alert">
+        {errors.map((e) => (
+          <li>{e}</li>
+        ))}
+      </ul>
+    )
+  }
+
+  <div class="grid">
+    <label>
+      <span>Tipo</span>
+      <select name="tipo">
+        {
+          TIPOS_TEMPORADA.map((tp) => (
+            <option value={tp} selected={temporada.tipo === tp}>
+              {tp === 'baja' ? 'Baja' : 'Alta'}
+            </option>
+          ))
+        }
+      </select>
+    </label>
+    <label>
+      <span>Etiqueta (opcional)</span>
+      <input name="etiqueta" value={val('etiqueta')} placeholder="Ej. Semana Santa" />
+    </label>
+    <label>
+      <span>Fecha de inicio</span>
+      <input type="date" name="fecha_inicio" value={val('fecha_inicio')} required />
+    </label>
+    <label>
+      <span>Fecha de fin</span>
+      <input type="date" name="fecha_fin" value={val('fecha_fin')} required />
+    </label>
+  </div>
+
+  <p class="hint">
+    El rango es inclusivo. Puede haber varios rangos por tipo (p. ej. varios
+    tramos de temporada alta a lo largo del año).
+  </p>
+
+  <div class="actions">
+    <a href={cancelHref} class="cancel">Cancelar</a>
+    <button type="submit">{submitLabel}</button>
+  </div>
+</form>
+
+<style>
+  .temporada-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5, 1.25rem);
+    max-width: 560px;
+  }
+  .errors {
+    margin: 0;
+    padding: var(--space-4) var(--space-4) var(--space-4) var(--space-8);
+    background: var(--color-destructive);
+    color: var(--color-white);
+    border-radius: var(--radius);
+    font-size: var(--fs-sm);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-4);
+  }
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
+  }
+  input,
+  select {
+    font: inherit;
+    font-weight: var(--fw-regular);
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-sand);
+  }
+  input:focus-visible,
+  select:focus-visible {
+    outline: 2px solid var(--color-teal);
+    outline-offset: 1px;
+  }
+  .hint {
+    margin: 0;
+    font-size: var(--fs-xs);
+    color: var(--color-muted);
+  }
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: var(--space-4);
+  }
+  .cancel {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
+    color: var(--color-muted);
+    text-decoration: none;
+  }
+  .cancel:hover {
+    color: var(--color-navy);
+  }
+  button {
+    font: inherit;
+    font-weight: var(--fw-bold);
+    padding: var(--space-3) var(--space-8);
+    color: var(--color-white);
+    background: var(--color-cta);
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+  }
+  button:hover {
+    background: var(--color-coral-dim);
+  }
+</style>

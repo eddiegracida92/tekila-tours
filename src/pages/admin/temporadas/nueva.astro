@@ -1,0 +1,68 @@
+---
+export const prerender = false;
+
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import TemporadaForm from '@/components/admin/TemporadaForm.astro';
+import { createServerSupabase, esOwner } from '@/lib/auth';
+import { parseTemporadaForm } from '@/lib/admin/temporadas';
+
+const admin = Astro.locals.admin!;
+const owner = esOwner(admin);
+const supabase = createServerSupabase(Astro.request, Astro.cookies);
+
+let errors: string[] = [];
+let previo: Record<string, unknown> = {};
+
+if (Astro.request.method === 'POST') {
+  if (!owner) {
+    errors = ['Solo el owner puede crear temporadas.'];
+  } else {
+    const form = await Astro.request.formData();
+    const result = parseTemporadaForm(form);
+    if ('errors' in result) {
+      errors = result.errors;
+      previo = Object.fromEntries(form.entries());
+    } else {
+      const { error } = await supabase.from('temporadas').insert(result.data);
+      if (error) {
+        errors = [`No se pudo crear: ${error.message}`];
+        previo = result.data as Record<string, unknown>;
+      } else {
+        return Astro.redirect('/admin/temporadas');
+      }
+    }
+  }
+}
+---
+
+<AdminLayout title="Nueva temporada" active="temporadas">
+  <p class="crumbs"><a href="/admin/temporadas">Temporadas</a> › Nueva</p>
+  {
+    owner ? (
+      <TemporadaForm
+        temporada={previo}
+        action="/admin/temporadas/nueva"
+        submitLabel="Crear temporada"
+        cancelHref="/admin/temporadas"
+        errors={errors}
+      />
+    ) : (
+      <p>Solo el owner puede crear temporadas.</p>
+    )
+  }
+</AdminLayout>
+
+<style>
+  .crumbs {
+    margin: 0 0 var(--space-4);
+    font-size: var(--fs-sm);
+    color: var(--color-muted);
+  }
+  .crumbs a {
+    color: var(--color-teal-dim);
+    text-decoration: none;
+  }
+  .crumbs a:hover {
+    text-decoration: underline;
+  }
+</style>

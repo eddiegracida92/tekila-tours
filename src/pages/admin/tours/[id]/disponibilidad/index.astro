@@ -1,0 +1,294 @@
+---
+export const prerender = false;
+
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import { createServerSupabase } from '@/lib/auth';
+
+const { id } = Astro.params;
+const supabase = createServerSupabase(Astro.request, Astro.cookies);
+
+// Por defecto mostramos de hoy en adelante (la agenda operativa); ?todas=1 lista
+// también las fechas pasadas.
+const verTodas = Astro.url.searchParams.get('todas') === '1';
+const hoy = new Date().toISOString().slice(0, 10);
+
+let aviso: string | null = null;
+
+// Acciones desde el listado: toggle bloqueada / eliminar. Cualquier admin.
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const accion = form.get('accion');
+  const did = String(form.get('did') ?? '');
+  if (did && accion === 'toggle') {
+    const bloquear = form.get('bloquear') === '1';
+    const { error } = await supabase.from('disponibilidad').update({ bloqueada: bloquear }).eq('id', did);
+    aviso = error ? 'No se pudo cambiar el estado.' : bloquear ? 'Fecha bloqueada.' : 'Fecha desbloqueada.';
+  } else if (did && accion === 'eliminar') {
+    // Nunca borrar una fecha con plazas reservadas (rompería el histórico).
+    const { data: fila } = await supabase.from('disponibilidad').select('cupo_reservado').eq('id', did).maybeSingle();
+    if (fila && Number(fila.cupo_reservado) > 0) {
+      aviso = 'No se puede eliminar una fecha con reservas. Bloquéala en su lugar.';
+    } else {
+      const { error } = await supabase.from('disponibilidad').delete().eq('id', did);
+      aviso = error ? 'No se pudo eliminar.' : 'Fecha eliminada.';
+    }
+  }
+}
+
+const { data: tour } = await supabase.from('tours').select('id, nombre_es').eq('id', id).maybeSingle();
+
+let query = supabase
+  .from('disponibilidad')
+  .select('*')
+  .eq('tour_id', id)
+  .order('fecha', { ascending: true });
+if (!verTodas) query = query.gte('fecha', hoy);
+
+const { data: fechas } = await query;
+
+const fmt = (iso: string) =>
+  new Date(`${iso}T00:00:00`).toLocaleDateString('es-MX', {
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+const libre = (f: any) => (f.cupo_total == null ? '∞' : Math.max(0, f.cupo_total - f.cupo_reservado));
+---
+
+{
+  !tour ? (
+    <AdminLayout title="Tour no encontrado" active="tours">
+      <p>Ese tour no existe. <a href="/admin/tours">Volver</a>.</p>
+    </AdminLayout>
+  ) : (
+    <AdminLayout title={`Disponibilidad: ${tour.nombre_es}`} active="tours">
+      <p class="crumbs">
+        <a href="/admin/tours">Tours</a> ›
+        <a href={`/admin/tours/${id}`}>{tour.nombre_es}</a> › Disponibilidad
+      </p>
+
+      <div class="head">
+        <div>
+          <p class="count">{fechas?.length ?? 0} fechas {verTodas ? '(todas)' : '(de hoy en adelante)'}</p>
+          <p class="toggle-view">
+            {verTodas ? (
+              <a href={`/admin/tours/${id}/disponibilidad`}>Ver solo próximas</a>
+            ) : (
+              <a href={`/admin/tours/${id}/disponibilidad?todas=1`}>Ver todas (incluye pasadas)</a>
+            )}
+          </p>
+        </div>
+        <a class="new" href={`/admin/tours/${id}/disponibilidad/nueva`}>+ Agregar fecha</a>
+      </div>
+
+      {aviso && <p class="aviso">{aviso}</p>}
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th class="num">Cupo total</th>
+              <th class="num">Reservado</th>
+              <th class="num">Libre</th>
+              <th>Estado</th>
+              <th class="right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(fechas ?? []).map((f) => (
+              <tr class:list={[{ off: f.bloqueada }]}>
+                <td>{fmt(f.fecha)}</td>
+                <td class="num">{f.cupo_total == null ? 'Ilimitado' : f.cupo_total}</td>
+                <td class="num">{f.cupo_reservado}</td>
+                <td class="num">{libre(f)}</td>
+                <td>
+                  <span class:list={['badge', f.bloqueada ? 'no' : 'on']}>
+                    {f.bloqueada ? 'Bloqueada' : 'Abierta'}
+                  </span>
+                </td>
+                <td class="right">
+                  <a class="action" href={`/admin/tours/${id}/disponibilidad/${f.id}`}>
+                    Editar
+                  </a>
+                  <form method="POST" class="inline">
+                    <input type="hidden" name="accion" value="toggle" />
+                    <input type="hidden" name="did" value={f.id} />
+                    <input type="hidden" name="bloquear" value={f.bloqueada ? '0' : '1'} />
+                    <button type="submit" class="linkbtn">
+                      {f.bloqueada ? 'Desbloquear' : 'Bloquear'}
+                    </button>
+                  </form>
+                  {f.cupo_reservado === 0 && (
+                    <form method="POST" class="inline" onsubmit="return confirm('¿Eliminar esta fecha? No se puede deshacer.')">
+                      <input type="hidden" name="accion" value="eliminar" />
+                      <input type="hidden" name="did" value={f.id} />
+                      <button type="submit" class="linkbtn danger">
+                        Eliminar
+                      </button>
+                    </form>
+                  )}
+                </td>
+              </tr>
+            ))}
+            {(fechas ?? []).length === 0 && (
+              <tr>
+                <td colspan="6" class="empty">
+                  {verTodas ? 'Este tour aún no tiene fechas de disponibilidad.' : 'No hay fechas próximas. Agrega una o revisa "Ver todas".'}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </AdminLayout>
+  )
+}
+
+<style>
+  .crumbs {
+    margin: 0 0 var(--space-4);
+    font-size: var(--fs-sm);
+    color: var(--color-muted);
+  }
+  .crumbs a {
+    color: var(--color-teal-dim);
+    text-decoration: none;
+  }
+  .crumbs a:hover {
+    text-decoration: underline;
+  }
+  .head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+  }
+  .count {
+    margin: 0 0 var(--space-1);
+    color: var(--color-navy);
+    font-weight: var(--fw-bold);
+  }
+  .toggle-view {
+    margin: 0;
+    font-size: var(--fs-sm);
+  }
+  .toggle-view a {
+    color: var(--color-teal-dim);
+    text-decoration: none;
+  }
+  .toggle-view a:hover {
+    text-decoration: underline;
+  }
+  .new {
+    flex-shrink: 0;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-bold);
+    color: var(--color-white);
+    background: var(--color-cta);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius);
+    text-decoration: none;
+  }
+  .new:hover {
+    background: var(--color-coral-dim);
+  }
+  .aviso {
+    margin: 0 0 var(--space-4);
+    padding: var(--space-3);
+    background: var(--color-surface);
+    border-left: 3px solid var(--color-teal);
+    border-radius: var(--radius);
+    font-size: var(--fs-sm);
+  }
+  .table-wrap {
+    overflow-x: auto;
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--fs-sm);
+  }
+  th,
+  td {
+    text-align: left;
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+    white-space: nowrap;
+  }
+  th {
+    font-family: var(--font-display);
+    font-weight: var(--fw-semibold);
+    color: var(--color-navy);
+    background: var(--color-surface);
+  }
+  .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+  tr.off {
+    opacity: 0.55;
+  }
+  .right {
+    text-align: right;
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-full);
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-bold);
+  }
+  .badge.on {
+    color: var(--color-success);
+    background: rgb(28 191 192 / 0.14);
+  }
+  .badge.no {
+    color: var(--color-muted);
+    background: var(--color-surface);
+  }
+  .action {
+    color: var(--color-teal-dim);
+    font-weight: var(--fw-semibold);
+    text-decoration: none;
+    margin-right: var(--space-3);
+  }
+  .action:hover {
+    text-decoration: underline;
+  }
+  .inline {
+    display: inline;
+    margin-left: var(--space-3);
+  }
+  .linkbtn {
+    font: inherit;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
+    color: var(--color-muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+  }
+  .linkbtn:hover {
+    color: var(--color-navy);
+    text-decoration: underline;
+  }
+  .linkbtn.danger:hover {
+    color: var(--color-destructive);
+  }
+  .empty {
+    text-align: center;
+    color: var(--color-muted);
+    padding: var(--space-8);
+    white-space: normal;
+  }
+</style>

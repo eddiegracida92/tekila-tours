@@ -4,7 +4,7 @@ import '@/styles/tokens.css';
 interface Props {
   title: string;
   /** Sección activa en el nav (para resaltar). */
-  active?: 'dashboard' | 'tours' | 'reservas' | 'vendedores';
+  active?: 'dashboard' | 'tours' | 'temporadas' | 'reservas' | 'vendedores';
 }
 
 const { title, active = 'dashboard' } = Astro.props;
@@ -15,6 +15,7 @@ const admin = Astro.locals.admin;
 const nav = [
   { key: 'dashboard', label: 'Dashboard', href: '/admin', ready: true },
   { key: 'tours', label: 'Tours y tarifas', href: '/admin/tours', ready: true },
+  { key: 'temporadas', label: 'Temporadas', href: '/admin/temporadas', ready: true },
   { key: 'reservas', label: 'Reservas', href: '/admin/reservas', ready: false },
   { key: 'vendedores', label: 'Vendedores', href: '/admin/vendedores', ready: false },
 ] as const;

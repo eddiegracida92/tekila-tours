@@ -1,0 +1,171 @@
+---
+/**
+ * Formulario de alta/edición de disponibilidad de un tour por fecha (Step 9.3b).
+ * Server-side puro. Lo escribe cualquier admin (RLS `is_admin()`).
+ *
+ * En edición, la fecha es de solo lectura (es la clave del día) y se muestra el
+ * cupo ya reservado como dato informativo — ese campo NO se edita a mano.
+ */
+interface Props {
+  fila?: Record<string, any>;
+  action: string;
+  submitLabel: string;
+  cancelHref: string;
+  /** true en alta: la fecha es editable; en edición queda fija. */
+  fechaEditable: boolean;
+  errors?: string[];
+}
+
+const { fila = {}, action, submitLabel, cancelHref, fechaEditable, errors = [] } = Astro.props;
+const val = (k: string, d: string = '') => (fila[k] ?? d) as string;
+const reservado = Number(fila.cupo_reservado ?? 0);
+---
+
+<form class="disp-form" method="POST" action={action}>
+  {
+    errors.length > 0 && (
+      <ul class="errors" role="alert">
+        {errors.map((e) => (
+          <li>{e}</li>
+        ))}
+      </ul>
+    )
+  }
+
+  <div class="grid">
+    <label>
+      <span>Fecha</span>
+      {
+        fechaEditable ? (
+          <input type="date" name="fecha" value={val('fecha')} required />
+        ) : (
+          <input type="date" value={val('fecha')} disabled />
+        )
+      }
+      {!fechaEditable && <input type="hidden" name="fecha" value={val('fecha')} />}
+    </label>
+    <label>
+      <span>Cupo total</span>
+      <input type="number" step="1" min="0" name="cupo_total" value={val('cupo_total')} placeholder="Vacío = ilimitado" />
+    </label>
+  </div>
+
+  {
+    !fechaEditable && (
+      <p class="info">
+        Plazas ya reservadas en esta fecha: <strong>{reservado}</strong>. Este número lo
+        gestiona el motor de reservas y no se edita aquí.
+      </p>
+    )
+  }
+
+  <label class="switch">
+    <input type="checkbox" name="bloqueada" checked={fila.bloqueada ?? false} />
+    <span>Fecha bloqueada (no se puede reservar)</span>
+  </label>
+
+  <p class="hint">
+    Deja el cupo vacío para "ilimitado" (sujeto a confirmación del operador). Bloquear
+    una fecha la cierra a nuevas reservas sin borrar el cupo.
+  </p>
+
+  <div class="actions">
+    <a href={cancelHref} class="cancel">Cancelar</a>
+    <button type="submit">{submitLabel}</button>
+  </div>
+</form>
+
+<style>
+  .disp-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5, 1.25rem);
+    max-width: 560px;
+  }
+  .errors {
+    margin: 0;
+    padding: var(--space-4) var(--space-4) var(--space-4) var(--space-8);
+    background: var(--color-destructive);
+    color: var(--color-white);
+    border-radius: var(--radius);
+    font-size: var(--fs-sm);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-4);
+  }
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
+  }
+  input {
+    font: inherit;
+    font-weight: var(--fw-regular);
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-sand);
+  }
+  input:disabled {
+    color: var(--color-muted);
+    background: var(--color-surface);
+  }
+  input:focus-visible {
+    outline: 2px solid var(--color-teal);
+    outline-offset: 1px;
+  }
+  .info {
+    margin: 0;
+    padding: var(--space-3);
+    background: var(--color-surface);
+    border-radius: var(--radius);
+    font-size: var(--fs-sm);
+  }
+  .hint {
+    margin: 0;
+    font-size: var(--fs-xs);
+    color: var(--color-muted);
+  }
+  .switch {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .switch input {
+    width: 1.1rem;
+    height: 1.1rem;
+    accent-color: var(--color-teal);
+  }
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: var(--space-4);
+  }
+  .cancel {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
+    color: var(--color-muted);
+    text-decoration: none;
+  }
+  .cancel:hover {
+    color: var(--color-navy);
+  }
+  button {
+    font: inherit;
+    font-weight: var(--fw-bold);
+    padding: var(--space-3) var(--space-8);
+    color: var(--color-white);
+    background: var(--color-cta);
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+  }
+  button:hover {
+    background: var(--color-coral-dim);
+  }
+</style>

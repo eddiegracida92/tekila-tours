@@ -1,0 +1,79 @@
+---
+export const prerender = false;
+
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import TemporadaForm from '@/components/admin/TemporadaForm.astro';
+import { createServerSupabase, esOwner } from '@/lib/auth';
+import { parseTemporadaForm } from '@/lib/admin/temporadas';
+
+const { id } = Astro.params;
+const admin = Astro.locals.admin!;
+const owner = esOwner(admin);
+const supabase = createServerSupabase(Astro.request, Astro.cookies);
+
+let errors: string[] = [];
+
+if (Astro.request.method === 'POST') {
+  if (!owner) {
+    errors = ['Solo el owner puede editar temporadas.'];
+  } else {
+    const form = await Astro.request.formData();
+    const result = parseTemporadaForm(form);
+    if ('errors' in result) {
+      errors = result.errors;
+    } else {
+      const { error } = await supabase.from('temporadas').update(result.data).eq('id', id);
+      if (error) {
+        errors = [`No se pudo guardar: ${error.message}`];
+      } else {
+        return Astro.redirect('/admin/temporadas');
+      }
+    }
+  }
+}
+
+const { data: temporada } = await supabase.from('temporadas').select('*').eq('id', id).maybeSingle();
+---
+
+{
+  !temporada ? (
+    <AdminLayout title="Temporada no encontrada" active="temporadas">
+      <p>Esa temporada no existe. <a href="/admin/temporadas">Volver</a>.</p>
+    </AdminLayout>
+  ) : (
+    <AdminLayout title="Editar temporada" active="temporadas">
+      <p class="crumbs"><a href="/admin/temporadas">Temporadas</a> › Editar</p>
+      {!owner && <p class="warn">Solo el owner puede guardar cambios; el formulario es de solo lectura.</p>}
+      <TemporadaForm
+        temporada={temporada}
+        action={`/admin/temporadas/${id}`}
+        submitLabel="Guardar cambios"
+        cancelHref="/admin/temporadas"
+        errors={errors}
+      />
+    </AdminLayout>
+  )
+}
+
+<style>
+  .crumbs {
+    margin: 0 0 var(--space-4);
+    font-size: var(--fs-sm);
+    color: var(--color-muted);
+  }
+  .crumbs a {
+    color: var(--color-teal-dim);
+    text-decoration: none;
+  }
+  .crumbs a:hover {
+    text-decoration: underline;
+  }
+  .warn {
+    margin: 0 0 var(--space-4);
+    padding: var(--space-3);
+    background: var(--color-surface);
+    border-left: 3px solid var(--color-gold);
+    border-radius: var(--radius);
+    font-size: var(--fs-sm);
+  }
+</style>
