@@ -1,0 +1,219 @@
+---
+import '@/styles/tokens.css';
+
+interface Props {
+  title: string;
+  /** Sección activa en el nav (para resaltar). */
+  active?: 'dashboard' | 'tours' | 'reservas' | 'vendedores';
+}
+
+const { title, active = 'dashboard' } = Astro.props;
+const admin = Astro.locals.admin;
+
+// Nav del panel. Solo "Dashboard" existe en 9.1; el resto llega en 9.2–9.4
+// y se muestra como "próximamente" para dejar ver la estructura sin romper.
+const nav = [
+  { key: 'dashboard', label: 'Dashboard', href: '/admin', ready: true },
+  { key: 'tours', label: 'Tours y tarifas', href: '/admin/tours', ready: false },
+  { key: 'reservas', label: 'Reservas', href: '/admin/reservas', ready: false },
+  { key: 'vendedores', label: 'Vendedores', href: '/admin/vendedores', ready: false },
+] as const;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>{title} · Panel Tekila Tours</title>
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand">Tekila Tours</div>
+        <nav>
+          {
+            nav.map((item) =>
+              item.ready ? (
+                <a href={item.href} class:list={['nav-item', { on: item.key === active }]}>
+                  {item.label}
+                </a>
+              ) : (
+                <span class="nav-item disabled">
+                  {item.label}
+                  <em>próximamente</em>
+                </span>
+              ),
+            )
+          }
+        </nav>
+      </aside>
+
+      <div class="body">
+        <header class="topbar">
+          <h1>{title}</h1>
+          <div class="user">
+            <span class="whoami">
+              {admin?.nombre ?? admin?.email}
+              <em>{admin?.rol}</em>
+            </span>
+            <form method="POST" action="/admin/logout">
+              <button type="submit">Salir</button>
+            </form>
+          </div>
+        </header>
+
+        <main class="content">
+          <slot />
+        </main>
+      </div>
+    </div>
+  </body>
+</html>
+
+<style>
+  body {
+    margin: 0;
+    font-family: var(--font-body);
+    color: var(--color-text);
+    background: var(--color-bg);
+  }
+  .shell {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    min-height: 100vh;
+  }
+  .sidebar {
+    background: var(--color-navy);
+    color: var(--color-white);
+    padding: var(--space-6) var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+  .brand {
+    font-family: var(--font-display);
+    font-weight: var(--fw-bold);
+    font-size: var(--fs-h3);
+    color: var(--color-gold);
+  }
+  nav {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    border-radius: var(--radius);
+    color: rgb(255 255 255 / 0.82);
+    text-decoration: none;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
+  }
+  .nav-item:hover {
+    background: var(--color-navy-mid);
+    color: var(--color-white);
+  }
+  .nav-item.on {
+    background: var(--color-navy-mid);
+    color: var(--color-white);
+    box-shadow: inset 3px 0 0 var(--color-gold);
+  }
+  .nav-item.disabled {
+    color: rgb(255 255 255 / 0.35);
+    cursor: default;
+  }
+  .nav-item.disabled:hover {
+    background: transparent;
+  }
+  .nav-item em {
+    font-style: normal;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    opacity: 0.7;
+  }
+  .body {
+    display: flex;
+    flex-direction: column;
+  }
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-8);
+    background: var(--color-white);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .topbar h1 {
+    font-family: var(--font-display);
+    font-weight: var(--fw-semibold);
+    font-size: var(--fs-h3);
+    margin: 0;
+    color: var(--color-navy);
+  }
+  .user {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+  }
+  .whoami {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 1.2;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
+  }
+  .whoami em {
+    font-style: normal;
+    font-size: var(--fs-xs);
+    color: var(--color-muted);
+    text-transform: capitalize;
+  }
+  .user button {
+    font: inherit;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
+    padding: var(--space-2) var(--space-4);
+    color: var(--color-navy);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    cursor: pointer;
+  }
+  .user button:hover {
+    background: var(--color-border);
+  }
+  .content {
+    padding: var(--space-8);
+    max-width: 1200px;
+    width: 100%;
+  }
+
+  @media (max-width: 720px) {
+    .shell {
+      grid-template-columns: 1fr;
+    }
+    .sidebar {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-4);
+      padding: var(--space-3) var(--space-4);
+    }
+    .sidebar nav {
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+    .nav-item.disabled em {
+      display: none;
+    }
+  }
+</style>
