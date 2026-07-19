@@ -2,106 +2,267 @@
 export const prerender = false;
 
 import AdminLayout from '@/layouts/AdminLayout.astro';
+import { createServerSupabase, puedeVerPr } from '@/lib/auth';
+import {
+  parseRango,
+  totalesPorMoneda,
+  fmtDinero,
+  type FilaVentas,
+  type TotalMoneda,
+} from '@/lib/admin/dashboard';
 
-// El middleware ya garantizó que hay un admin autenticado en `locals.admin`.
 const admin = Astro.locals.admin!;
-const saludo = admin.nombre ?? admin.email;
+const verPr = puedeVerPr(admin);
+
+// Rango de fechas (mes en curso por defecto). Validado con zod; un rango
+// inválido cae al default y muestra el aviso, sin romper la página.
+const { rango, error: errorRango } = parseRango(Astro.url.searchParams);
+
+// Datos vía la RPC definer con la SESIÓN del admin (enfoque A): la BD decide
+// qué filas y si el margen viene o no (candado del PR server-side).
+const supabase = createServerSupabase(Astro.request, Astro.cookies);
+const { data, error } = await supabase.rpc('dashboard_ventas', {
+  p_desde: rango.desde,
+  p_hasta: rango.hasta,
+});
+
+const filas = (data ?? []) as FilaVentas[];
+const totales: TotalMoneda[] = totalesPorMoneda(filas);
+
+// Filas de la tabla agrupadas por moneda (la RPC ya viene ordenada).
+const porMoneda = new Map<string, FilaVentas[]>();
+for (const f of filas) {
+  porMoneda.set(f.moneda, [...(porMoneda.get(f.moneda) ?? []), f]);
+}
+
+const fmtFecha = (iso: string) =>
+  new Date(`${iso}T00:00:00`).toLocaleDateString('es-MX', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
 ---
 
 <AdminLayout title="Dashboard" active="dashboard">
-  <section class="welcome">
-    <h2>Hola, {saludo} 👋</h2>
-    <p>
-      Bienvenido al panel de administración. Aquí vivirán los tours, tarifas,
-      reservas, vendedores y el dashboard de ventas.
-    </p>
-  </section>
+  <p class="intro">
+    Ventas, margen y comisiones de reservas pagadas, por rango de <strong>fecha de venta</strong>.
+    {!verPr && <span class="nopr">Tu cuenta no ve el margen (PR).</span>}
+  </p>
 
-  <div class="grid">
-    <a class="tile link" href="/admin/tours">
-      <h3>Tours y tarifas</h3>
-      <p>Alta y edición del catálogo. La matriz de precios llega en 9.3.</p>
-      <span class="go">Gestionar →</span>
-    </a>
-    <article class="tile">
-      <h3>Reservas</h3>
-      <p>Ver reservas pagadas, estados y detalle de cada venta.</p>
-      <span class="soon">Step 9.3</span>
-    </article>
-    <article class="tile">
-      <h3>Vendedores</h3>
-      <p>Crear cuentas, fijar comisión y permisos (incluido ver PR).</p>
-      <span class="soon">Step 9.3</span>
-    </article>
-    <article class="tile">
-      <h3>Ventas y margen</h3>
-      <p>Ingresos, margen (PP−PR) y comisiones por vendedor.</p>
-      <span class="soon">Step 9.4</span>
-    </article>
-  </div>
+  <form class="filtros" method="get">
+    <label>
+      Desde
+      <input type="date" name="desde" value={rango.desde} max={rango.hasta} />
+    </label>
+    <label>
+      Hasta
+      <input type="date" name="hasta" value={rango.hasta} min={rango.desde} />
+    </label>
+    <button type="submit">Aplicar</button>
+    <span class="periodo">{fmtFecha(rango.desde)} – {fmtFecha(rango.hasta)}</span>
+  </form>
+
+  {errorRango && <p class="alert">{errorRango} Se muestra el mes en curso.</p>}
+  {error && <p class="alert">No se pudieron cargar los datos: {error.message}</p>}
+
+  {totales.length === 0 && !error && (
+    <p class="empty">No hay ventas pagadas en este periodo.</p>
+  )}
+
+  {totales.map((t) => (
+    <section class="moneda-bloque">
+      <h2 class="moneda-titulo">Ventas en {t.moneda}</h2>
+
+      <div class="cards">
+        <article class="card">
+          <span class="k">Ventas</span>
+          <span class="v">{t.num_ventas}</span>
+        </article>
+        <article class="card">
+          <span class="k">Ingresos</span>
+          <span class="v">{fmtDinero(t.ingresos, t.moneda)}</span>
+        </article>
+        <article class="card">
+          <span class="k">Comisiones</span>
+          <span class="v">{fmtDinero(t.comisiones, t.moneda)}</span>
+        </article>
+        {verPr && t.margen !== null && (
+          <article class="card acento">
+            <span class="k">Margen (PP−PR)</span>
+            <span class="v">{fmtDinero(t.margen, t.moneda)}</span>
+          </article>
+        )}
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Vendedor</th>
+              <th class="num">Ventas</th>
+              <th class="num">Ingresos</th>
+              <th class="num">Comisiones</th>
+              {verPr && <th class="num">Margen</th>}
+            </tr>
+          </thead>
+          <tbody>
+            {(porMoneda.get(t.moneda) ?? []).map((f) => (
+              <tr>
+                <td>{f.vendedor_nombre ?? 'Web (sitio)'}</td>
+                <td class="num">{f.num_ventas}</td>
+                <td class="num">{fmtDinero(f.ingresos, f.moneda)}</td>
+                <td class="num">{fmtDinero(f.comisiones, f.moneda)}</td>
+                {verPr && (
+                  <td class="num">{f.margen !== null ? fmtDinero(f.margen, f.moneda) : '—'}</td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  ))}
 </AdminLayout>
 
 <style>
-  .welcome h2 {
-    font-family: var(--font-display);
-    font-size: var(--fs-h2);
-    margin: 0 0 var(--space-2);
-    color: var(--color-navy);
-  }
-  .welcome p {
-    margin: 0 0 var(--space-8);
-    max-width: 60ch;
+  .intro {
+    margin: 0 0 var(--space-4);
     color: var(--color-muted);
+    font-size: var(--fs-sm);
     line-height: var(--lh-body);
   }
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: var(--space-4);
+  .nopr {
+    color: var(--color-gold-dim);
+    font-weight: var(--fw-semibold);
   }
-  .tile {
+  .filtros {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--space-3);
+    margin-bottom: var(--space-6);
+  }
+  .filtros label {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-semibold);
+    color: var(--color-navy);
+  }
+  .filtros input {
+    font: inherit;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-white);
+  }
+  .filtros button {
+    font: inherit;
+    font-weight: var(--fw-semibold);
+    padding: var(--space-2) var(--space-5);
+    color: var(--color-white);
+    background: var(--color-navy);
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+  }
+  .filtros button:hover {
+    background: var(--color-navy-mid);
+  }
+  .periodo {
+    font-size: var(--fs-sm);
+    color: var(--color-muted);
+    padding-bottom: var(--space-2);
+  }
+  .alert {
+    margin: 0 0 var(--space-4);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius);
+    background: rgb(224 90 43 / 0.1);
+    color: var(--color-coral);
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
+  }
+  .empty {
+    padding: var(--space-8);
+    text-align: center;
+    color: var(--color-muted);
     background: var(--color-white);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-card);
-    padding: var(--space-6);
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
   }
-  .tile h3 {
+  .moneda-bloque {
+    margin-bottom: var(--space-8);
+  }
+  .moneda-titulo {
     font-family: var(--font-display);
     font-size: var(--fs-h3);
-    margin: 0;
     color: var(--color-navy);
+    margin: 0 0 var(--space-3);
   }
-  .tile p {
-    margin: 0;
-    flex: 1;
-    font-size: var(--fs-sm);
-    color: var(--color-muted);
-    line-height: var(--lh-body);
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
   }
-  .soon {
-    align-self: flex-start;
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    padding: var(--space-5);
+  }
+  .card.acento {
+    border-color: var(--color-teal);
+    box-shadow: inset 3px 0 0 var(--color-teal);
+  }
+  .card .k {
     font-size: var(--fs-xs);
     font-weight: var(--fw-bold);
-    color: var(--color-gold-dim);
-    background: var(--color-surface);
-    padding: var(--space-1) var(--space-2);
-    border-radius: var(--radius-full);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-muted);
   }
-  .tile.link {
-    text-decoration: none;
-    color: inherit;
-    transition: border-color 0.15s ease;
+  .card .v {
+    font-family: var(--font-display);
+    font-size: var(--fs-h3);
+    font-weight: var(--fw-semibold);
+    color: var(--color-navy);
+    font-variant-numeric: tabular-nums;
   }
-  .tile.link:hover {
-    border-color: var(--color-teal);
+  .table-wrap {
+    overflow-x: auto;
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
   }
-  .go {
-    align-self: flex-start;
+  table {
+    width: 100%;
+    border-collapse: collapse;
     font-size: var(--fs-sm);
-    font-weight: var(--fw-bold);
-    color: var(--color-teal-dim);
+  }
+  th,
+  td {
+    text-align: left;
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+    white-space: nowrap;
+  }
+  th {
+    font-family: var(--font-display);
+    font-weight: var(--fw-semibold);
+    color: var(--color-navy);
+    background: var(--color-surface);
+  }
+  .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  tbody tr:last-child td {
+    border-bottom: none;
   }
 </style>
