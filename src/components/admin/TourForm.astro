@@ -1,0 +1,341 @@
+---
+/**
+ * Formulario de alta/edición de un tour (Step 9.2).
+ * Server-side puro: hace POST a `action`; el guardado + RLS ocurren en la página.
+ */
+interface Props {
+  // Los valores llegan de la BD (fila `tours`) o del form crudo tras un error de
+  // validación (todo string), por eso el tipo es permisivo (`any`). Los helpers
+  // normalizan lo que haga falta para pintar cada control.
+  tour?: Record<string, any>;
+  action: string;
+  submitLabel: string;
+  errors?: string[];
+}
+
+const { tour = {}, action, submitLabel, errors = [] } = Astro.props;
+
+/** Arreglo → texto multilínea para textarea. Tolera strings (repintado tras error). */
+const arr = (v: string[] | string | null | undefined) =>
+  Array.isArray(v) ? v.join('\n') : (v ?? '');
+/** Valor por defecto para checkbox `activo` en alta: true. */
+const activoDef = tour.activo ?? true;
+---
+
+<form class="tour-form" method="POST" action={action}>
+  {
+    errors.length > 0 && (
+      <ul class="errors" role="alert">
+        {errors.map((e) => (
+          <li>{e}</li>
+        ))}
+      </ul>
+    )
+  }
+
+  <fieldset>
+    <legend>Identidad</legend>
+    <div class="grid">
+      <label>
+        <span>Slug (URL)</span>
+        <input name="slug" value={tour.slug ?? ''} required placeholder="isla-mujeres" />
+      </label>
+      <label>
+        <span>Orden</span>
+        <input type="number" name="orden" value={tour.orden ?? 0} min="0" />
+      </label>
+      <label>
+        <span>Nombre (ES)</span>
+        <input name="nombre_es" value={tour.nombre_es ?? ''} required />
+      </label>
+      <label>
+        <span>Nombre (EN)</span>
+        <input name="nombre_en" value={tour.nombre_en ?? ''} required />
+      </label>
+      <label>
+        <span>Categoría (ES)</span>
+        <input name="categoria_es" value={tour.categoria_es ?? ''} />
+      </label>
+      <label>
+        <span>Categoría (EN)</span>
+        <input name="categoria_en" value={tour.categoria_en ?? ''} />
+      </label>
+      <label>
+        <span>Operador</span>
+        <input name="operador" value={tour.operador ?? ''} />
+      </label>
+      <label>
+        <span>Imagen principal (ruta/URL)</span>
+        <input name="imagen_principal" value={tour.imagen_principal ?? ''} />
+      </label>
+    </div>
+    <div class="switches">
+      <label class="switch">
+        <input type="checkbox" name="activo" checked={activoDef} />
+        <span>Activo (visible al público)</span>
+      </label>
+      <label class="switch">
+        <input type="checkbox" name="grupo_xcaret" checked={tour.grupo_xcaret ?? false} />
+        <span>Grupo Xcaret</span>
+      </label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Descripciones</legend>
+    <div class="grid">
+      <label>
+        <span>Descripción corta (ES)</span>
+        <textarea name="desc_corta_es" rows="2">{tour.desc_corta_es ?? ''}</textarea>
+      </label>
+      <label>
+        <span>Descripción corta (EN)</span>
+        <textarea name="desc_corta_en" rows="2">{tour.desc_corta_en ?? ''}</textarea>
+      </label>
+      <label>
+        <span>Descripción larga (ES)</span>
+        <textarea name="desc_larga_es" rows="4">{tour.desc_larga_es ?? ''}</textarea>
+      </label>
+      <label>
+        <span>Descripción larga (EN)</span>
+        <textarea name="desc_larga_en" rows="4">{tour.desc_larga_en ?? ''}</textarea>
+      </label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Logística</legend>
+    <div class="grid">
+      <label>
+        <span>Duración</span>
+        <input name="duracion" value={tour.duracion ?? ''} placeholder="8 horas" />
+      </label>
+      <label>
+        <span>Horarios de salida</span>
+        <input name="horarios_salida" value={tour.horarios_salida ?? ''} />
+      </label>
+      <label>
+        <span>Punto de salida</span>
+        <input name="punto_salida" value={tour.punto_salida ?? ''} />
+      </label>
+      <label>
+        <span>Días de operación (uno por línea)</span>
+        <textarea name="dias_operacion" rows="3" set:text={arr(tour.dias_operacion)} />
+      </label>
+    </div>
+    <label class="switch">
+      <input type="checkbox" name="incluye_transporte" checked={tour.incluye_transporte ?? false} />
+      <span>Incluye transporte</span>
+    </label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Incluye / No incluye (uno por línea)</legend>
+    <div class="grid">
+      <label>
+        <span>Incluye (ES)</span>
+        <textarea name="incluye_es" rows="4" set:text={arr(tour.incluye_es)} />
+      </label>
+      <label>
+        <span>Incluye (EN)</span>
+        <textarea name="incluye_en" rows="4" set:text={arr(tour.incluye_en)} />
+      </label>
+      <label>
+        <span>No incluye (ES)</span>
+        <textarea name="no_incluye_es" rows="4" set:text={arr(tour.no_incluye_es)} />
+      </label>
+      <label>
+        <span>No incluye (EN)</span>
+        <textarea name="no_incluye_en" rows="4" set:text={arr(tour.no_incluye_en)} />
+      </label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Qué llevar y restricciones</legend>
+    <div class="grid">
+      <label>
+        <span>Qué llevar (ES)</span>
+        <textarea name="que_llevar_es" rows="3">{tour.que_llevar_es ?? ''}</textarea>
+      </label>
+      <label>
+        <span>Qué llevar (EN)</span>
+        <textarea name="que_llevar_en" rows="3">{tour.que_llevar_en ?? ''}</textarea>
+      </label>
+      <label>
+        <span>Restricciones (ES)</span>
+        <textarea name="restricciones_es" rows="3">{tour.restricciones_es ?? ''}</textarea>
+      </label>
+      <label>
+        <span>Restricciones (EN)</span>
+        <textarea name="restricciones_en" rows="3">{tour.restricciones_en ?? ''}</textarea>
+      </label>
+    </div>
+    <div class="switches">
+      <label class="switch">
+        <input type="checkbox" name="mostrar_que_llevar" checked={tour.mostrar_que_llevar ?? false} />
+        <span>Mostrar "qué llevar"</span>
+      </label>
+      <label class="switch">
+        <input
+          type="checkbox"
+          name="mostrar_restricciones"
+          checked={tour.mostrar_restricciones ?? false}
+        />
+        <span>Mostrar restricciones</span>
+      </label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Reglas y cupo</legend>
+    <div class="grid">
+      <label>
+        <span>Capacidad mínima</span>
+        <input type="number" name="capacidad_min" value={tour.capacidad_min ?? 1} min="1" />
+      </label>
+      <label>
+        <span>Capacidad máxima</span>
+        <input type="number" name="capacidad_max" value={tour.capacidad_max ?? 50} min="1" />
+      </label>
+      <label>
+        <span>Anticipación mínima (horas)</span>
+        <input
+          type="number"
+          name="anticipacion_horas"
+          value={tour.anticipacion_horas ?? 24}
+          min="0"
+        />
+      </label>
+      <label>
+        <span>Corte horario (HH:MM)</span>
+        <input name="corte_horario" value={tour.corte_horario ?? ''} placeholder="18:00" />
+      </label>
+      <label>
+        <span>Edad menor: mínima</span>
+        <input type="number" name="edad_menor_min" value={tour.edad_menor_min ?? ''} min="0" />
+      </label>
+      <label>
+        <span>Edad menor: máxima</span>
+        <input type="number" name="edad_menor_max" value={tour.edad_menor_max ?? ''} min="0" />
+      </label>
+    </div>
+    <div class="switches">
+      <label class="switch">
+        <input type="checkbox" name="solo_prepago" checked={tour.solo_prepago ?? false} />
+        <span>Solo prepago</span>
+      </label>
+      <label class="switch">
+        <input type="checkbox" name="impuesto_online" checked={tour.impuesto_online ?? false} />
+        <span>Impuesto en línea</span>
+      </label>
+    </div>
+  </fieldset>
+
+  <div class="actions">
+    <a href="/admin/tours" class="cancel">Cancelar</a>
+    <button type="submit">{submitLabel}</button>
+  </div>
+</form>
+
+<style>
+  .tour-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+  .errors {
+    margin: 0;
+    padding: var(--space-4) var(--space-4) var(--space-4) var(--space-8);
+    background: var(--color-destructive);
+    color: var(--color-white);
+    border-radius: var(--radius);
+    font-size: var(--fs-sm);
+  }
+  fieldset {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    padding: var(--space-6);
+    background: var(--color-white);
+  }
+  legend {
+    font-family: var(--font-display);
+    font-weight: var(--fw-semibold);
+    font-size: var(--fs-h3);
+    color: var(--color-navy);
+    padding: 0 var(--space-2);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: var(--space-4);
+  }
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
+    color: var(--color-text);
+  }
+  input,
+  textarea {
+    font: inherit;
+    font-weight: var(--fw-regular);
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-sand);
+    resize: vertical;
+  }
+  input:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid var(--color-teal);
+    outline-offset: 1px;
+  }
+  .switches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    margin-top: var(--space-4);
+  }
+  .switch {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-2);
+    font-weight: var(--fw-semibold);
+  }
+  .switch input {
+    width: 1.1rem;
+    height: 1.1rem;
+    accent-color: var(--color-teal);
+  }
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: var(--space-4);
+  }
+  .cancel {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
+    color: var(--color-muted);
+    text-decoration: none;
+  }
+  .cancel:hover {
+    color: var(--color-navy);
+  }
+  button {
+    font: inherit;
+    font-weight: var(--fw-bold);
+    padding: var(--space-3) var(--space-8);
+    color: var(--color-white);
+    background: var(--color-cta);
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+  }
+  button:hover {
+    background: var(--color-coral-dim);
+  }
+</style>

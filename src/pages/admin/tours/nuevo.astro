@@ -1,0 +1,39 @@
+---
+export const prerender = false;
+
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import TourForm from '@/components/admin/TourForm.astro';
+import { createServerSupabase } from '@/lib/auth';
+import { parseTourForm } from '@/lib/admin/tours';
+
+const supabase = createServerSupabase(Astro.request, Astro.cookies);
+
+let errors: string[] = [];
+// Conservamos lo capturado para repintar el form si hay error de validación.
+let previo: Record<string, unknown> = {};
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const result = parseTourForm(form);
+  if ('errors' in result) {
+    errors = result.errors;
+    previo = Object.fromEntries(form.entries());
+  } else {
+    const { error } = await supabase.from('tours').insert(result.data);
+    if (error) {
+      errors = [
+        error.code === '23505'
+          ? 'Ese slug ya existe. Usa uno distinto.'
+          : `No se pudo crear: ${error.message}`,
+      ];
+      previo = result.data as Record<string, unknown>;
+    } else {
+      return Astro.redirect('/admin/tours?ok=creado');
+    }
+  }
+}
+---
+
+<AdminLayout title="Nuevo tour" active="tours">
+  <TourForm tour={previo} action="/admin/tours/nuevo" submitLabel="Crear tour" errors={errors} />
+</AdminLayout>

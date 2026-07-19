@@ -18,11 +18,11 @@ const saludo = admin.nombre ?? admin.email;
   </section>
 
   <div class="grid">
-    <article class="tile">
+    <a class="tile link" href="/admin/tours">
       <h3>Tours y tarifas</h3>
-      <p>Alta y edición del catálogo, matriz de precios y temporadas.</p>
-      <span class="soon">Step 9.2</span>
-    </article>
+      <p>Alta y edición del catálogo. La matriz de precios llega en 9.3.</p>
+      <span class="go">Gestionar →</span>
+    </a>
     <article class="tile">
       <h3>Reservas</h3>
       <p>Ver reservas pagadas, estados y detalle de cada venta.</p>
@@ -89,5 +89,19 @@ const saludo = admin.nombre ?? admin.email;
     background: var(--color-surface);
     padding: var(--space-1) var(--space-2);
     border-radius: var(--radius-full);
+  }
+  .tile.link {
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.15s ease;
+  }
+  .tile.link:hover {
+    border-color: var(--color-teal);
+  }
+  .go {
+    align-self: flex-start;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-bold);
+    color: var(--color-teal-dim);
   }
 </style>

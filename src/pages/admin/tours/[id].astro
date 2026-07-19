@@ -1,0 +1,53 @@
+---
+export const prerender = false;
+
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import TourForm from '@/components/admin/TourForm.astro';
+import { createServerSupabase } from '@/lib/auth';
+import { parseTourForm } from '@/lib/admin/tours';
+
+const { id } = Astro.params;
+const supabase = createServerSupabase(Astro.request, Astro.cookies);
+
+let errors: string[] = [];
+
+// Guardar cambios (POST). La RLS `is_admin()` autoriza el UPDATE.
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const result = parseTourForm(form);
+  if ('errors' in result) {
+    errors = result.errors;
+  } else {
+    const { error } = await supabase.from('tours').update(result.data).eq('id', id);
+    if (error) {
+      errors = [
+        error.code === '23505'
+          ? 'Ese slug ya existe en otro tour.'
+          : `No se pudo guardar: ${error.message}`,
+      ];
+    } else {
+      return Astro.redirect('/admin/tours?ok=guardado');
+    }
+  }
+}
+
+// Cargar el tour (tras un POST fallido, mostramos lo que había en BD + errores).
+const { data: tour } = await supabase.from('tours').select('*').eq('id', id).maybeSingle();
+---
+
+{
+  !tour ? (
+    <AdminLayout title="Tour no encontrado" active="tours">
+      <p>Ese tour no existe. <a href="/admin/tours">Volver al listado</a>.</p>
+    </AdminLayout>
+  ) : (
+    <AdminLayout title={`Editar: ${tour.nombre_es}`} active="tours">
+      <TourForm
+        tour={tour}
+        action={`/admin/tours/${id}`}
+        submitLabel="Guardar cambios"
+        errors={errors}
+      />
+    </AdminLayout>
+  )
+}
