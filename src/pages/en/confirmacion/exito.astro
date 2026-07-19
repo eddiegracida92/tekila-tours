@@ -1,0 +1,15 @@
+---
+export const prerender = false;
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import ConfirmationView from '@/components/booking/ConfirmationView.astro';
+import { useTranslations } from '@/i18n/ui';
+
+const lang = 'en' as const;
+const t = useTranslations(lang);
+const sessionId = Astro.url.searchParams.get('session_id') ?? undefined;
+const title = `${t('confirm.success_title')} — Tekila Tours`;
+---
+
+<BaseLayout lang={lang} title={title} description={t('confirm.success_paid')} path="/confirmacion/exito">
+  <ConfirmationView lang={lang} variant="exito" sessionId={sessionId} />
+</BaseLayout>

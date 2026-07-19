@@ -64,3 +64,33 @@ export function createHold(
 ): Promise<ApiResult<{ ok: true; holdId: string; expiraEn: string }>> {
   return postJson('/api/hold', { slug, fecha, personas });
 }
+
+/** Datos mínimos del cliente para la reserva. */
+export interface CheckoutCliente {
+  nombre: string;
+  email: string;
+  telefono: string;
+}
+
+export interface CheckoutInput {
+  slug: string;
+  holdId: string;
+  fecha: string;
+  audiencia: Audiencia;
+  adultos: number;
+  menores: number;
+  cliente: CheckoutCliente;
+  idioma: 'es' | 'en';
+  /** Opt-in explícito de marketing (casilla del checkout). */
+  marketingOptIn?: boolean;
+}
+
+/**
+ * Crea la reserva y la sesión de pago. Devuelve la URL de Stripe a la que el
+ * navegador debe redirigir. El precio se revalida SIEMPRE en el servidor.
+ */
+export function checkout(
+  input: CheckoutInput,
+): Promise<ApiResult<{ ok: true; folio: string; url: string }>> {
+  return postJson('/api/checkout', input);
+}

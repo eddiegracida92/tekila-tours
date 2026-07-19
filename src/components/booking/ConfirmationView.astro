@@ -1,0 +1,99 @@
+---
+import { useTranslations, localizePath, type Lang } from '@/i18n/ui';
+import { createAdminClient } from '@/lib/supabase';
+import Header from '@/components/site/Header.astro';
+import ContactBar from '@/components/site/ContactBar.astro';
+import Footer from '@/components/site/Footer.astro';
+
+interface Props {
+  lang: Lang;
+  variant: 'exito' | 'cancelado';
+  sessionId?: string;
+  folio?: string;
+}
+
+const { lang, variant, sessionId, folio } = Astro.props;
+const t = useTranslations(lang);
+
+type Reserva = { folio: string; estado: string; cliente_email: string; tour_id: string };
+let reserva: Reserva | null = null;
+let retrySlug: string | null = null;
+
+const supabase = createAdminClient();
+
+// Éxito: localiza la reserva por la referencia de la sesión de Stripe.
+if (variant === 'exito' && sessionId) {
+  const { data } = await supabase
+    .from('reservas')
+    .select('folio, estado, cliente_email, tour_id')
+    .eq('provider_ref', sessionId)
+    .maybeSingle();
+  reserva = (data as Reserva) ?? null;
+}
+
+// Cancelado: si hay folio, resuelve el tour para ofrecer reintentar el pago.
+if (variant === 'cancelado' && folio) {
+  const { data } = await supabase
+    .from('reservas')
+    .select('tour_id')
+    .eq('folio', folio)
+    .maybeSingle();
+  if (data?.tour_id) {
+    const { data: tour } = await supabase
+      .from('tours')
+      .select('slug')
+      .eq('id', data.tour_id)
+      .maybeSingle();
+    retrySlug = tour?.slug ?? null;
+  }
+}
+
+const pagada = reserva?.estado === 'pagada' || reserva?.estado === 'confirmada';
+const homeHref = localizePath('/', lang);
+const retryHref = retrySlug ? localizePath(`/reservar/${retrySlug}`, lang) : homeHref;
+---
+
+<Header lang={lang} />
+
+<main class="confirm-page">
+  {
+    variant === 'exito' && reserva && (
+      <section class="confirm-card confirm-ok">
+        <div class="confirm-icon">{pagada ? '✅' : '⏳'}</div>
+        <h1>{pagada ? t('confirm.success_title') : t('confirm.pending_title')}</h1>
+        <p>{pagada ? t('confirm.success_paid') : t('confirm.pending_msg')}</p>
+        <p class="confirm-folio">
+          {t('confirm.folio_label')}: <strong>{reserva.folio}</strong>
+        </p>
+        <p class="confirm-email">{t('confirm.email_prefix')} {reserva.cliente_email}</p>
+        <a href={homeHref} class="btn-primary confirm-btn">{t('confirm.back_home')}</a>
+      </section>
+    )
+  }
+
+  {
+    variant === 'exito' && !reserva && (
+      <section class="confirm-card">
+        <div class="confirm-icon">🔎</div>
+        <h1>{t('confirm.not_found_title')}</h1>
+        <p>{t('confirm.not_found_msg')}</p>
+        <a href={homeHref} class="btn-primary confirm-btn">{t('confirm.back_home')}</a>
+      </section>
+    )
+  }
+
+  {
+    variant === 'cancelado' && (
+      <section class="confirm-card">
+        <div class="confirm-icon">🛑</div>
+        <h1>{t('confirm.cancel_title')}</h1>
+        <p>{t('confirm.cancel_msg')}</p>
+        <a href={retryHref} class="btn-primary confirm-btn">{t('confirm.cancel_retry')}</a>
+        <a href={homeHref} class="confirm-link">{t('confirm.back_home')}</a>
+      </section>
+    )
+  }
+</main>
+
+<ContactBar />
+<Footer lang={lang} />

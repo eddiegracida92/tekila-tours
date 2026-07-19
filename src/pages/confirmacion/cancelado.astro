@@ -1,0 +1,15 @@
+---
+export const prerender = false;
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import ConfirmationView from '@/components/booking/ConfirmationView.astro';
+import { useTranslations } from '@/i18n/ui';
+
+const lang = 'es' as const;
+const t = useTranslations(lang);
+const folio = Astro.url.searchParams.get('folio') ?? undefined;
+const title = `${t('confirm.cancel_title')} — Tekila Tours`;
+---
+
+<BaseLayout lang={lang} title={title} description={t('confirm.cancel_msg')} path="/confirmacion/cancelado">
+  <ConfirmationView lang={lang} variant="cancelado" folio={folio} />
+</BaseLayout>

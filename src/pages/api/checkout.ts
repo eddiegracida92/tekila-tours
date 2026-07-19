@@ -25,6 +25,7 @@ const CheckoutSchema = z.object({
   }),
   idioma: z.enum(['es', 'en']).default('es'),
   zonaPickup: z.string().max(160).optional(),
+  marketingOptIn: z.boolean().default(false),
 });
 
 const TARIFA_COLUMNS =
@@ -43,7 +44,7 @@ export const POST: APIRoute = async ({ request }) => {
   if (!parsed.success) {
     return errorJson('payload_invalido', 422, parsed.error.flatten());
   }
-  const { slug, holdId, fecha, audiencia, adultos, menores, cliente, idioma, zonaPickup } =
+  const { slug, holdId, fecha, audiencia, adultos, menores, cliente, idioma, zonaPickup, marketingOptIn } =
     parsed.data;
   const personas = adultos + menores;
 
@@ -143,6 +144,26 @@ export const POST: APIRoute = async ({ request }) => {
     .maybeSingle();
 
   if (linkErr || !linked) return errorJson('hold_invalido', 409);
+
+  // 5b) Captura de correo para marketing SOLO con consentimiento explícito
+  //     (opt-in). Independiente del pago: si falla, no aborta el checkout.
+  //     Regla no negociable #11: solo con consentimiento y baja obligatoria.
+  if (marketingOptIn) {
+    await supabase
+      .from('email_suscriptores')
+      .upsert(
+        {
+          email: cliente.email,
+          nombre: cliente.nombre,
+          idioma,
+          consentimiento: true,
+          consent_origen: 'checkout',
+          consent_fecha: new Date().toISOString(),
+          estado: 'suscrito',
+        },
+        { onConflict: 'email' },
+      );
+  }
 
   // 6) Sesión de pago con el proveedor (Stripe). El monto = total revalidado.
   const nombreTour = idioma === 'en' ? tour.nombre_en : tour.nombre_es;

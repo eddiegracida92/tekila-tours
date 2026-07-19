@@ -4,6 +4,7 @@ import { createHold, fetchQuote, type Audiencia, type QuotePublico } from '@/lib
 import AvailabilityCalendar from './AvailabilityCalendar';
 import PassengerSelector from './PassengerSelector';
 import QuoteSummary from './QuoteSummary';
+import CheckoutForm from './CheckoutForm';
 import type { Lang } from './types';
 
 interface Props {
@@ -212,10 +213,18 @@ export default function BookingWizard({ slug, lang, maxPersonas = 20 }: Props) {
               <p className="bk-held-timer">
                 {t('booking.held_timer')} <strong>{mmss(remaining)}</strong>
               </p>
-              <button type="button" className="btn-primary bk-hold-btn" disabled>
-                {t('booking.continue_payment')}
-              </button>
-              <small className="bk-held-soon">{t('booking.continue_soon')}</small>
+              {fecha && (
+                <CheckoutForm
+                  t={t}
+                  lang={lang}
+                  slug={slug}
+                  holdId={hold.holdId}
+                  fecha={fecha}
+                  audiencia={audiencia}
+                  adultos={adultos}
+                  menores={menores}
+                />
+              )}
             </div>
           )}
         </aside>
