@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { Audiencia, Lang, QuotePublico, Translate } from './types';
+import type { Lang, QuotePublico, Translate } from './types';
 import { localeFor } from './types';
 
 interface Props {

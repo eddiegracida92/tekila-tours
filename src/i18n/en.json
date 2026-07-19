@@ -116,6 +116,7 @@
   "booking.err_sin_cupo": "No availability for that date and party size. Try another date.",
   "booking.err_fecha_bloqueada": "That date isn't available. Please choose another.",
   "booking.err_excede_capacidad": "The party size exceeds this tour's capacity.",
+  "booking.err_demasiadas_solicitudes": "Too many attempts in a row. Please wait a few minutes and try again.",
   "booking.err_no_price": "We couldn't price that date. Please try another.",
   "booking.err_generic": "Something went wrong. Please try again in a moment.",
   "booking.retry": "Retry",

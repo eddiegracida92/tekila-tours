@@ -18,6 +18,21 @@ export interface DatosConfirmacion {
 
 const COLORS = { navy: '#12192C', gold: '#D4AB3B', text: '#1A1A2E', muted: '#6B7280', sand: '#FAFAF6' };
 
+/**
+ * Escapa texto antes de interpolarlo en el HTML del correo. `clienteNombre`
+ * llega del formulario público de checkout (sin filtro de caracteres): sin
+ * esto, un "nombre" con etiquetas inyecta HTML en un correo legítimo nuestro.
+ * La versión de texto plano NO se escapa (no es HTML).
+ */
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 /** Formatea una fecha ISO a texto largo local, sin líos de zona horaria. */
 function formatearFecha(iso: string, lang: 'es' | 'en'): string {
   const [y, m, d] = iso.split('-').map(Number);
@@ -99,8 +114,8 @@ export function plantillaConfirmacion(d: DatosConfirmacion): EmailContenido {
 
   const row = (label: string, value: string) =>
     `<tr>
-       <td style="padding:8px 0;color:${COLORS.muted};font-size:14px;">${label}</td>
-       <td style="padding:8px 0;color:${COLORS.text};font-size:14px;font-weight:700;text-align:right;">${value}</td>
+       <td style="padding:8px 0;color:${COLORS.muted};font-size:14px;">${escapeHtml(label)}</td>
+       <td style="padding:8px 0;color:${COLORS.text};font-size:14px;font-weight:700;text-align:right;">${escapeHtml(value)}</td>
      </tr>`;
 
   const html = `<!doctype html><html><body style="margin:0;background:${COLORS.sand};font-family:Arial,Helvetica,sans-serif;">
@@ -111,7 +126,7 @@ export function plantillaConfirmacion(d: DatosConfirmacion): EmailContenido {
           <span style="color:${COLORS.gold};font-size:20px;font-weight:700;letter-spacing:1px;">TEKILA TOURS</span>
         </td></tr>
         <tr><td style="padding:28px;">
-          <p style="margin:0 0 8px;color:${COLORS.text};font-size:16px;">${t.greeting}</p>
+          <p style="margin:0 0 8px;color:${COLORS.text};font-size:16px;">${escapeHtml(t.greeting)}</p>
           <p style="margin:0 0 20px;color:${COLORS.text};font-size:16px;">${t.confirmed}</p>
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #eee;border-bottom:1px solid #eee;">
             ${row(t.labelFolio, d.folio)}

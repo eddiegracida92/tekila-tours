@@ -116,6 +116,7 @@
   "booking.err_sin_cupo": "No hay cupo para esa fecha y número de personas. Prueba otra fecha.",
   "booking.err_fecha_bloqueada": "Esa fecha no está disponible. Elige otra.",
   "booking.err_excede_capacidad": "El número de personas excede la capacidad del tour.",
+  "booking.err_demasiadas_solicitudes": "Hiciste demasiados intentos seguidos. Espera unos minutos y vuelve a intentar.",
   "booking.err_no_price": "No pudimos calcular el precio para esa fecha. Intenta con otra.",
   "booking.err_generic": "Algo salió mal. Vuelve a intentar en un momento.",
   "booking.retry": "Reintentar",

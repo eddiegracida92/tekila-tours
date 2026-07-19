@@ -37,6 +37,19 @@ describe('plantillaConfirmacion', () => {
     expect(plantillaConfirmacion(base).text).toContain('de agosto de 2026');
   });
 
+  it('escapa HTML en nombre del cliente y del tour (solo en el html, no en el texto)', () => {
+    const { html, text } = plantillaConfirmacion({
+      ...base,
+      clienteNombre: '<a href="https://phish.mx">Ana</a>',
+      tourNombre: 'Isla <script>Mujeres',
+    });
+    expect(html).not.toContain('<a href="https://phish.mx">');
+    expect(html).not.toContain('<script>');
+    expect(html).toContain('&lt;a href=&quot;https://phish.mx&quot;&gt;Ana&lt;/a&gt;');
+    expect(html).toContain('Isla &lt;script&gt;Mujeres');
+    expect(text).toContain('<a href="https://phish.mx">Ana</a>');
+  });
+
   it('cambia idioma a inglés (asunto y fecha)', () => {
     const en = plantillaConfirmacion({ ...base, idioma: 'en' });
     expect(en.subject).toContain('Your booking confirmation');

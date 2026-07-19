@@ -29,6 +29,7 @@ function holdErrorKey(code: string): string {
   if (code === 'sin_cupo') return 'booking.err_sin_cupo';
   if (code === 'fecha_bloqueada') return 'booking.err_fecha_bloqueada';
   if (code === 'excede_capacidad') return 'booking.err_excede_capacidad';
+  if (code === 'demasiadas_solicitudes') return 'booking.err_demasiadas_solicitudes';
   return 'booking.err_generic';
 }
 
