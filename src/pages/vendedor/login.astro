@@ -1,0 +1,152 @@
+---
+export const prerender = false;
+
+import '@/styles/tokens.css';
+import { createServerSupabase } from '@/lib/auth';
+
+// Login server-side del portal de vendedores. Mismo mecanismo que `/admin/login`
+// (POST a esta ruta; `@supabase/ssr` guarda la sesión en cookies), pero aquí
+// SOLO entra el rol 'vendedor' activo. Owner/staff van a `/admin`.
+let error: string | null = null;
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const email = String(form.get('email') ?? '').trim();
+  const password = String(form.get('password') ?? '');
+
+  if (!email || !password) {
+    error = 'Escribe tu correo y tu contraseña.';
+  } else {
+    const supabase = createServerSupabase(Astro.request, Astro.cookies);
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (signInError || !data.user) {
+      error = 'Correo o contraseña incorrectos.';
+    } else {
+      const { data: perfil } = await supabase
+        .from('admin_users')
+        .select('rol, activo')
+        .eq('id', data.user.id)
+        .maybeSingle();
+
+      if (!perfil || !perfil.activo || perfil.rol !== 'vendedor') {
+        // No es un vendedor activo (o es owner/staff): no entra al portal.
+        await supabase.auth.signOut();
+        error = 'Esta cuenta no tiene acceso al portal de vendedores.';
+      } else {
+        return Astro.redirect('/vendedor');
+      }
+    }
+  }
+}
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Entrar · Vendedores Tekila Tours</title>
+  </head>
+  <body>
+    <main class="wrap">
+      <form class="card" method="POST">
+        <h1>Vendedores Tekila Tours</h1>
+        <p class="sub">Acceso para vendedores autorizados.</p>
+
+        {error && <p class="error" role="alert">{error}</p>}
+
+        <label>
+          <span>Correo</span>
+          <input type="email" name="email" autocomplete="username" required />
+        </label>
+
+        <label>
+          <span>Contraseña</span>
+          <input type="password" name="password" autocomplete="current-password" required />
+        </label>
+
+        <button type="submit">Entrar</button>
+      </form>
+    </main>
+  </body>
+</html>
+
+<style>
+  body {
+    margin: 0;
+    font-family: var(--font-body);
+    color: var(--color-text);
+    background: var(--color-navy);
+  }
+  .wrap {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: var(--space-4);
+  }
+  .card {
+    width: 100%;
+    max-width: 380px;
+    background: var(--color-white);
+    border-radius: var(--radius-card);
+    padding: var(--space-8);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    box-shadow: 0 12px 40px rgb(0 0 0 / 0.3);
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-weight: var(--fw-bold);
+    font-size: var(--fs-h3);
+    margin: 0;
+    color: var(--color-navy);
+  }
+  .sub {
+    margin: calc(var(--space-2) * -1) 0 0;
+    font-size: var(--fs-sm);
+    color: var(--color-muted);
+  }
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
+  }
+  input {
+    font: inherit;
+    padding: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-sand);
+  }
+  input:focus-visible {
+    outline: 2px solid var(--color-teal);
+    outline-offset: 1px;
+  }
+  button {
+    margin-top: var(--space-2);
+    font: inherit;
+    font-weight: var(--fw-bold);
+    padding: var(--space-3);
+    color: var(--color-white);
+    background: var(--color-cta);
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+  }
+  button:hover {
+    background: var(--color-coral-dim);
+  }
+  .error {
+    margin: 0;
+    padding: var(--space-3);
+    font-size: var(--fs-sm);
+    color: var(--color-white);
+    background: var(--color-destructive);
+    border-radius: var(--radius);
+  }
+</style>

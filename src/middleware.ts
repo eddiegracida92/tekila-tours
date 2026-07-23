@@ -2,33 +2,44 @@ import { defineMiddleware } from 'astro:middleware';
 import { getAdminSession } from '@/lib/auth';
 
 /**
- * Guardia del panel admin (Step 9.1).
+ * Guardia de las dos áreas autenticadas del servidor.
  *
- * Protege TODO `/admin/*` en el servidor (no solo ocultando UI):
- *  - `/admin/login` es público; si ya hay sesión de gestión, va al dashboard.
- *  - Cualquier otra ruta `/admin/*` sin sesión de gestión válida → login.
+ * `/admin/*` — PERSONAL DE GESTIÓN (owner/staff). Un 'vendedor' no entra aquí.
+ * `/vendedor/*` — PORTAL DE VENDEDORES (rol 'vendedor'). Owner/staff no entran
+ *   aquí: su lugar es `/admin`. Cada rol se enruta a su propio login.
  *
- * El panel `/admin/*` es solo para PERSONAL DE GESTIÓN (owner/staff). Un
- * 'vendedor' autenticado no entra aquí: su lugar es el portal `/vendedor/*`
- * (Step 9.5 UI). Por eso el guard exige rol owner/staff, no cualquier fila.
- *
- * El perfil (rol/permisos) se inyecta en `Astro.locals.admin` para que el
- * layout y las páginas no vuelvan a consultarlo. Fuera de `/admin` no hace nada.
+ * Ambas leen la sesión de `admin_users` con `getAdminSession` (valida el token
+ * con `getUser`) y filtran por rol. El perfil se inyecta en `Astro.locals`
+ * (`admin` o `vendedor`) para que las páginas no vuelvan a consultarlo. Fuera de
+ * estas dos áreas el middleware no hace nada.
  */
 export const onRequest = defineMiddleware(async (context, next) => {
   const { pathname } = context.url;
-  if (!pathname.startsWith('/admin')) return next();
+  const enAdmin = pathname.startsWith('/admin');
+  const enVendedor = pathname.startsWith('/vendedor');
+  if (!enAdmin && !enVendedor) return next();
 
-  const admin = await getAdminSession(context.request, context.cookies);
-  // Solo owner/staff acceden al panel de gestión; un vendedor no cuenta aquí.
-  const gestion = admin && admin.rol !== 'vendedor' ? admin : null;
-  context.locals.admin = gestion;
+  const perfil = await getAdminSession(context.request, context.cookies);
 
-  if (pathname === '/admin/login') {
-    return gestion ? context.redirect('/admin') : next();
+  if (enAdmin) {
+    // Solo owner/staff acceden al panel de gestión; un vendedor no cuenta aquí.
+    const gestion = perfil && perfil.rol !== 'vendedor' ? perfil : null;
+    context.locals.admin = gestion;
+
+    if (pathname === '/admin/login') {
+      return gestion ? context.redirect('/admin') : next();
+    }
+    if (!gestion) return context.redirect('/admin/login');
+    return next();
   }
 
-  if (!gestion) return context.redirect('/admin/login');
+  // enVendedor: solo el rol 'vendedor' activo entra al portal.
+  const vendedor = perfil && perfil.rol === 'vendedor' ? perfil : null;
+  context.locals.vendedor = vendedor;
 
+  if (pathname === '/vendedor/login') {
+    return vendedor ? context.redirect('/vendedor') : next();
+  }
+  if (!vendedor) return context.redirect('/vendedor/login');
   return next();
 });

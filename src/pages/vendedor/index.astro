@@ -1,0 +1,210 @@
+---
+export const prerender = false;
+
+import VendedorLayout from '@/layouts/VendedorLayout.astro';
+import { createServerSupabase } from '@/lib/auth';
+
+const vendedor = Astro.locals.vendedor!;
+
+// Enfoque A: la sesión del vendedor + RLS `reservas_read` lo limitan a SUS
+// propias reservas (`vendedor_id = auth.uid()`). NO pedimos costo_total_pr ni
+// margen (revocados a `authenticated`); comision_monto sí es legible.
+const supabase = createServerSupabase(Astro.request, Astro.cookies);
+const { data: reservas } = await supabase
+  .from('reservas')
+  .select('folio, fecha, estado, total, moneda, comision_monto, metodo_cobro, tours(nombre_es)')
+  .order('creado_en', { ascending: false })
+  .limit(200);
+
+const filas = reservas ?? [];
+
+// Comisión acumulada POR MONEDA (nunca se mezclan monedas), solo ventas cobradas.
+const comisionPorMoneda = new Map<string, number>();
+for (const r of filas) {
+  if (r.estado !== 'pagada' && r.estado !== 'confirmada') continue;
+  const previa = comisionPorMoneda.get(r.moneda) ?? 0;
+  comisionPorMoneda.set(r.moneda, previa + Number(r.comision_monto ?? 0));
+}
+const comisiones = [...comisionPorMoneda.entries()].sort(([a], [b]) => a.localeCompare(b));
+
+const fmtFecha = (iso: string) =>
+  new Date(`${iso}T00:00:00`).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+const fmtDinero = (monto: number, moneda: string) =>
+  `${moneda} ${Number(monto).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+const metodoLabel: Record<string, string> = {
+  efectivo: 'Efectivo',
+  terminal_externa: 'Terminal propia',
+  online: 'Pago en línea',
+};
+const estadoClase: Record<string, string> = {
+  pagada: 'on',
+  confirmada: 'on',
+  pago_iniciado: 'wait',
+  pendiente: 'wait',
+  cancelada: 'no',
+  reembolsada: 'no',
+};
+---
+
+<VendedorLayout title="Mis ventas" active="ventas">
+  <div class="cards">
+    {
+      comisiones.length === 0 ? (
+        <article class="card">
+          <span class="k">Comisión acumulada</span>
+          <span class="v">—</span>
+        </article>
+      ) : (
+        comisiones.map(([moneda, monto]) => (
+          <article class="card acento">
+            <span class="k">Comisión acumulada ({moneda})</span>
+            <span class="v">{fmtDinero(monto, moneda)}</span>
+          </article>
+        ))
+      )
+    }
+  </div>
+
+  <p class="count">{filas.length} ventas (más recientes primero)</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Folio</th>
+          <th>Tour</th>
+          <th>Fecha</th>
+          <th>Cobro</th>
+          <th>Estado</th>
+          <th class="num">Total</th>
+          <th class="num">Comisión</th>
+        </tr>
+      </thead>
+      <tbody>
+        {
+          filas.map((r: any) => (
+            <tr>
+              <td class="folio">{r.folio}</td>
+              <td>{r.tours?.nombre_es ?? '—'}</td>
+              <td>{fmtFecha(r.fecha)}</td>
+              <td>{r.metodo_cobro ? (metodoLabel[r.metodo_cobro] ?? r.metodo_cobro) : '—'}</td>
+              <td>
+                <span class:list={['badge', estadoClase[r.estado] ?? 'wait']}>{r.estado}</span>
+              </td>
+              <td class="num">{fmtDinero(Number(r.total), r.moneda)}</td>
+              <td class="num">{fmtDinero(Number(r.comision_monto ?? 0), r.moneda)}</td>
+            </tr>
+          ))
+        }
+        {filas.length === 0 && (
+          <tr>
+            <td colspan="7" class="empty">Aún no has registrado ventas.</td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  </div>
+</VendedorLayout>
+
+<style>
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+  }
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    padding: var(--space-5);
+  }
+  .card.acento {
+    border-color: var(--color-teal);
+    box-shadow: inset 3px 0 0 var(--color-teal);
+  }
+  .card .k {
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-muted);
+  }
+  .card .v {
+    font-family: var(--font-display);
+    font-size: var(--fs-h3);
+    font-weight: var(--fw-semibold);
+    color: var(--color-navy);
+    font-variant-numeric: tabular-nums;
+  }
+  .count {
+    margin: 0 0 var(--space-4);
+    color: var(--color-muted);
+    font-size: var(--fs-sm);
+  }
+  .table-wrap {
+    overflow-x: auto;
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--fs-sm);
+  }
+  th,
+  td {
+    text-align: left;
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+    white-space: nowrap;
+  }
+  th {
+    font-family: var(--font-display);
+    font-weight: var(--fw-semibold);
+    color: var(--color-navy);
+    background: var(--color-surface);
+  }
+  .folio {
+    font-variant-numeric: tabular-nums;
+    font-weight: var(--fw-semibold);
+  }
+  .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-full);
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-bold);
+    text-transform: capitalize;
+  }
+  .badge.on {
+    color: var(--color-success);
+    background: rgb(28 191 192 / 0.14);
+  }
+  .badge.wait {
+    color: var(--color-gold-dim);
+    background: rgb(212 171 59 / 0.14);
+  }
+  .badge.no {
+    color: var(--color-muted);
+    background: var(--color-surface);
+  }
+  .empty {
+    text-align: center;
+    color: var(--color-muted);
+    padding: var(--space-8);
+    white-space: normal;
+  }
+</style>
