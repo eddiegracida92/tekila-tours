@@ -4,7 +4,18 @@ import { createHold, fetchQuote, type Audiencia, type QuotePublico } from '@/lib
 import AvailabilityCalendar from '@/components/booking/AvailabilityCalendar';
 import PassengerSelector from '@/components/booking/PassengerSelector';
 import QuoteSummary from '@/components/booking/QuoteSummary';
-import { METODOS_COBRO, type MetodoCobro } from '@/lib/vendedor/venta';
+// Opciones de cobro del punto de venta. `efectivo`/`terminal_externa` = modo A
+// (se marca pagada al instante); `online` = modo B (genera link de pago Stripe).
+const COBRO_OPCIONES = [
+  { value: 'efectivo', label: 'Efectivo' },
+  { value: 'terminal_externa', label: 'Terminal propia' },
+  { value: 'online', label: 'Pago en línea (link)' },
+] as const;
+type CobroUI = (typeof COBRO_OPCIONES)[number]['value'];
+const COBRO_LABEL = Object.fromEntries(COBRO_OPCIONES.map((o) => [o.value, o.label])) as Record<
+  CobroUI,
+  string
+>;
 
 interface TourOpcion {
   slug: string;
@@ -20,11 +31,6 @@ interface Hold {
   expiraEn: string;
 }
 
-const METODO_LABEL: Record<MetodoCobro, string> = {
-  efectivo: 'Efectivo',
-  terminal_externa: 'Terminal propia',
-};
-
 const ERRORES: Record<string, string> = {
   sin_cupo: 'Ya no hay cupo para esa fecha.',
   hold_expirado: 'El apartado venció. Vuelve a apartar el cupo.',
@@ -32,6 +38,7 @@ const ERRORES: Record<string, string> = {
   hold_no_coincide: 'La selección cambió. Vuelve a apartar el cupo.',
   no_autorizado: 'Tu cuenta no puede registrar ventas.',
   no_autenticado: 'Tu sesión expiró. Vuelve a entrar.',
+  error_pago: 'No se pudo generar el link de pago. Intenta de nuevo.',
 };
 const errorMsg = (code: string) => ERRORES[code] ?? 'No se pudo registrar la venta. Intenta de nuevo.';
 
@@ -62,10 +69,12 @@ export default function PuntoDeVenta({ tours }: Props) {
   const [nombre, setNombre] = useState('');
   const [telefono, setTelefono] = useState('');
   const [email, setEmail] = useState('');
-  const [metodoCobro, setMetodoCobro] = useState<MetodoCobro>('efectivo');
+  const [metodoCobro, setMetodoCobro] = useState<CobroUI>('efectivo');
   const [enviando, setEnviando] = useState(false);
   const [ventaError, setVentaError] = useState<string | null>(null);
-  const [folio, setFolio] = useState<string | null>(null);
+  const [folio, setFolio] = useState<string | null>(null); // modo A: venta registrada
+  const [linkPago, setLinkPago] = useState<{ folio: string; url: string } | null>(null); // modo B
+  const [copiado, setCopiado] = useState(false);
 
   const personas = adultos + menores;
   const tourSel = tours.find((x) => x.slug === slug) ?? null;
@@ -144,21 +153,27 @@ export default function PuntoDeVenta({ tours }: Props) {
     if (!hold || !fecha || !slug || !nombre.trim()) return;
     setEnviando(true);
     setVentaError(null);
+
+    const online = metodoCobro === 'online';
+    const url = online ? '/api/vendedor/checkout-online' : '/api/vendedor/registrar-venta';
+    // Modo B no manda metodoCobro (el servidor fija 'online'); modo A sí.
+    const cuerpo: Record<string, unknown> = {
+      slug,
+      holdId: hold.holdId,
+      fecha,
+      audiencia,
+      adultos,
+      menores,
+      cliente: { nombre: nombre.trim(), telefono: telefono.trim(), email: email.trim() },
+    };
+    if (!online) cuerpo.metodoCobro = metodoCobro;
+
     let res: Response;
     try {
-      res = await fetch('/api/vendedor/registrar-venta', {
+      res = await fetch(url, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          slug,
-          holdId: hold.holdId,
-          fecha,
-          audiencia,
-          adultos,
-          menores,
-          cliente: { nombre: nombre.trim(), telefono: telefono.trim(), email: email.trim() },
-          metodoCobro,
-        }),
+        body: JSON.stringify(cuerpo),
       });
     } catch {
       setVentaError('Error de red. Intenta de nuevo.');
@@ -167,8 +182,9 @@ export default function PuntoDeVenta({ tours }: Props) {
     }
     const payload = await res.json().catch(() => null);
     if (res.ok && payload?.ok) {
-      setFolio(payload.folio);
       setHold(null);
+      if (online) setLinkPago({ folio: payload.folio, url: payload.url });
+      else setFolio(payload.folio);
     } else {
       setVentaError(errorMsg(payload?.error ?? 'error'));
     }
@@ -188,19 +204,59 @@ export default function PuntoDeVenta({ tours }: Props) {
     setEmail('');
     setMetodoCobro('efectivo');
     setFolio(null);
+    setLinkPago(null);
+    setCopiado(false);
   }
 
-  // Venta registrada: pantalla de éxito.
+  // Modo A — venta cobrada registrada.
   if (folio) {
     return (
       <div className="pv-done">
         <div className="pv-done-check">✅</div>
         <h2>Venta registrada</h2>
         <p>
-          Folio <strong>{folio}</strong> — cobrada por {METODO_LABEL[metodoCobro]}.
+          Folio <strong>{folio}</strong> — cobrada por {COBRO_LABEL[metodoCobro]}.
         </p>
         <div className="pv-done-actions">
           <button type="button" className="btn-primary" onClick={nuevaVenta}>
+            Registrar otra venta
+          </button>
+          <a href="/vendedor" className="pv-link">
+            Ver mis ventas →
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  // Modo B — link de pago generado (el cliente paga; se marca pagada por webhook).
+  if (linkPago) {
+    return (
+      <div className="pv-done">
+        <div className="pv-done-check">🔗</div>
+        <h2>Link de pago generado</h2>
+        <p>
+          Folio <strong>{linkPago.folio}</strong>. Comparte este link con el cliente o ábrelo para
+          que pague. La venta aparecerá como <strong>Pagada</strong> en tus ventas cuando el cliente
+          complete el pago.
+        </p>
+        <div className="pv-done-actions">
+          <a className="btn-primary" href={linkPago.url} target="_blank" rel="noopener noreferrer">
+            Abrir pago
+          </a>
+          <button
+            type="button"
+            className="pv-link"
+            onClick={() => {
+              navigator.clipboard?.writeText(linkPago.url).then(
+                () => setCopiado(true),
+                () => setCopiado(false),
+              );
+            }}
+          >
+            {copiado ? '¡Link copiado! ✓' : 'Copiar link'}
+          </button>
+          <button type="button" className="pv-link" onClick={nuevaVenta}>
             Registrar otra venta
           </button>
           <a href="/vendedor" className="pv-link">
@@ -323,17 +379,23 @@ export default function PuntoDeVenta({ tours }: Props) {
                 </label>
                 <label>
                   <span>Cobro</span>
-                  <select value={metodoCobro} onChange={(e) => setMetodoCobro(e.target.value as MetodoCobro)}>
-                    {METODOS_COBRO.map((m) => (
-                      <option key={m} value={m}>
-                        {METODO_LABEL[m]}
+                  <select value={metodoCobro} onChange={(e) => setMetodoCobro(e.target.value as CobroUI)}>
+                    {COBRO_OPCIONES.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
                       </option>
                     ))}
                   </select>
                 </label>
 
                 <button type="submit" className="btn-primary" disabled={enviando || !nombre.trim()}>
-                  {enviando ? 'Registrando…' : 'Registrar venta cobrada'}
+                  {metodoCobro === 'online'
+                    ? enviando
+                      ? 'Generando…'
+                      : 'Generar link de pago'
+                    : enviando
+                      ? 'Registrando…'
+                      : 'Registrar venta cobrada'}
                 </button>
                 {ventaError && <p className="bk-summary-error">{ventaError}</p>}
               </form>
