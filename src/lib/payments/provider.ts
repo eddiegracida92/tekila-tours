@@ -23,8 +23,9 @@ export interface CrearSesionInput {
   moneda: Moneda;
   /** Monto total a cobrar (salida de `/api/quote`). En la unidad mayor (p. ej. 178.00). */
   total: number;
-  /** Correo del cliente (prellena el checkout y liga el recibo). */
-  clienteEmail: string;
+  /** Correo del cliente (prellena el checkout y liga el recibo). Opcional: en
+   * una venta de vendedor en línea el cliente puede no dar correo. */
+  clienteEmail?: string;
   /** Idioma de la página de pago y de los correos. */
   idioma: 'es' | 'en';
   /** A dónde vuelve el cliente tras pagar / cancelar. */

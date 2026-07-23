@@ -13,7 +13,11 @@ import { z } from 'zod';
 export const METODOS_COBRO = ['efectivo', 'terminal_externa'] as const;
 export type MetodoCobro = (typeof METODOS_COBRO)[number];
 
-export const RegistrarVentaSchema = z.object({
+// Campos comunes a las dos formas de venta del vendedor (modo A efectivo y modo
+// B en línea): selección + datos del cliente. El correo del cliente en modo B
+// conviene tenerlo (Stripe lo usa para el recibo), pero se deja opcional aquí y
+// se valida el flujo en la UI.
+const VENTA_BASE = {
   slug: z.string().min(1).max(120),
   holdId: z.string().uuid(),
   fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'fecha_iso_invalida'),
@@ -23,8 +27,8 @@ export const RegistrarVentaSchema = z.object({
   cliente: z
     .object({
       nombre: z.string().trim().min(1).max(160),
-      // En una venta en efectivo el vendedor puede no tener correo/teléfono del
-      // cliente; son opcionales (las columnas son NOT NULL → se guardan vacías).
+      // El vendedor puede no tener correo/teléfono del cliente; son opcionales
+      // (las columnas son NOT NULL → se guardan vacías).
       telefono: z.string().trim().max(40).optional(),
       email: z.string().trim().max(200).optional(),
     })
@@ -35,10 +39,18 @@ export const RegistrarVentaSchema = z.object({
     })
     // Normaliza ausentes a '' para satisfacer las columnas NOT NULL.
     .transform((c) => ({ nombre: c.nombre, telefono: c.telefono ?? '', email: c.email ?? '' })),
+} as const;
+
+/** Modo A (efectivo/terminal): el vendedor elige el método de cobro presencial. */
+export const RegistrarVentaSchema = z.object({
+  ...VENTA_BASE,
   metodoCobro: z.enum(METODOS_COBRO),
 });
-
 export type RegistrarVentaInput = z.infer<typeof RegistrarVentaSchema>;
+
+/** Modo B (pago en línea): sin `metodoCobro` (el servidor fija 'online'). */
+export const CheckoutOnlineSchema = z.object({ ...VENTA_BASE });
+export type CheckoutOnlineInput = z.infer<typeof CheckoutOnlineSchema>;
 
 /** Config de comisión del vendedor (de `admin_users`). */
 export interface ComisionConfig {
