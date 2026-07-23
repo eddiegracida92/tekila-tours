@@ -10,9 +10,10 @@ interface Props {
 const { title, active = 'ventas' } = Astro.props;
 const vendedor = Astro.locals.vendedor;
 
-// Nav del portal. En el Paso 1 solo existe "Mis ventas"; "Registrar venta"
-// se añade en el Paso 2 (modo A).
-const nav = [{ key: 'ventas', label: 'Mis ventas', href: '/vendedor' }];
+const nav = [
+  { key: 'vender', label: 'Registrar venta', href: '/vendedor/vender' },
+  { key: 'ventas', label: 'Mis ventas', href: '/vendedor' },
+];
 ---
 
 <!doctype html>

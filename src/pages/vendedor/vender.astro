@@ -1,0 +1,117 @@
+---
+export const prerender = false;
+
+import '@/styles/global.css';
+import VendedorLayout from '@/layouts/VendedorLayout.astro';
+import { createServerSupabase } from '@/lib/auth';
+import PuntoDeVenta from '@/components/vendedor/PuntoDeVenta';
+
+// Tours activos para elegir en el punto de venta (lectura abierta a admin/anon).
+const supabase = createServerSupabase(Astro.request, Astro.cookies);
+const { data: tours } = await supabase
+  .from('tours')
+  .select('slug, nombre_es, capacidad_max')
+  .eq('activo', true)
+  .order('nombre_es');
+
+const opciones = (tours ?? []).map((t) => ({
+  slug: t.slug,
+  nombre: t.nombre_es,
+  capacidadMax: t.capacidad_max,
+}));
+---
+
+<VendedorLayout title="Registrar venta" active="vender">
+  <p class="intro">
+    Registra una venta cobrada en efectivo o en tu terminal. El precio se calcula
+    en el servidor y la comisión se congela al registrar.
+  </p>
+
+  {
+    opciones.length === 0 ? (
+      <p class="empty">No hay tours activos para vender.</p>
+    ) : (
+      <PuntoDeVenta client:only="react" tours={opciones} />
+    )
+  }
+</VendedorLayout>
+
+<style>
+  .intro {
+    margin: 0 0 var(--space-6);
+    max-width: 60ch;
+    color: var(--color-muted);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-body);
+  }
+  .empty {
+    padding: var(--space-8);
+    text-align: center;
+    color: var(--color-muted);
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+  }
+</style>
+
+<style is:global>
+  .pv-select {
+    font: inherit;
+    padding: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-white);
+    min-width: 260px;
+  }
+  .pv-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+    text-align: left;
+  }
+  .pv-form label {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-semibold);
+    color: var(--color-navy);
+  }
+  .pv-form input,
+  .pv-form select {
+    font: inherit;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-white);
+  }
+  .pv-done {
+    background: var(--color-white);
+    border: 1px solid var(--color-teal);
+    border-radius: var(--radius-card);
+    padding: var(--space-8);
+    text-align: center;
+    max-width: 480px;
+  }
+  .pv-done-check {
+    font-size: 2.5rem;
+  }
+  .pv-done h2 {
+    font-family: var(--font-display);
+    color: var(--color-navy);
+    margin: var(--space-2) 0;
+  }
+  .pv-done-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    align-items: center;
+    margin-top: var(--space-4);
+  }
+  .pv-link {
+    color: var(--color-teal-dim);
+    font-weight: var(--fw-bold);
+    text-decoration: none;
+  }
+</style>
