@@ -121,6 +121,17 @@
   "booking.err_generic": "Something went wrong. Please try again in a moment.",
   "booking.retry": "Retry",
 
+  "newsletter.title": "Don't miss our promotions",
+  "newsletter.description": "Subscribe to get tour offers by email. You can unsubscribe anytime.",
+  "newsletter.email_ph": "email@example.com",
+  "newsletter.consent": "I agree to receive promotions by email.",
+  "newsletter.submit": "Subscribe",
+  "newsletter.sending": "Sending…",
+  "newsletter.success": "Done! You're subscribed.",
+  "newsletter.err_consent": "Check the box to subscribe.",
+  "newsletter.err_invalid": "Please check your email and try again.",
+  "newsletter.err_generic": "Something went wrong. Please try again in a moment.",
+
   "footer.rights": "All rights reserved.",
 
   "lang.es": "Español",

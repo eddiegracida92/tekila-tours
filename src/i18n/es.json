@@ -121,6 +121,17 @@
   "booking.err_generic": "Algo salió mal. Vuelve a intentar en un momento.",
   "booking.retry": "Reintentar",
 
+  "newsletter.title": "No te pierdas nuestras promociones",
+  "newsletter.description": "Suscríbete y recibe ofertas de tours por correo. Puedes darte de baja cuando quieras.",
+  "newsletter.email_ph": "correo@ejemplo.com",
+  "newsletter.consent": "Acepto recibir promociones por correo.",
+  "newsletter.submit": "Suscribirme",
+  "newsletter.sending": "Enviando…",
+  "newsletter.success": "¡Listo! Ya estás suscrito.",
+  "newsletter.err_consent": "Marca la casilla para poder suscribirte.",
+  "newsletter.err_invalid": "Revisa tu correo e inténtalo de nuevo.",
+  "newsletter.err_generic": "Algo salió mal. Vuelve a intentar en un momento.",
+
   "footer.rights": "Todos los derechos reservados.",
 
   "lang.es": "Español",
