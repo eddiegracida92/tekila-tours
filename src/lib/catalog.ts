@@ -1,7 +1,7 @@
 import type { ImageMetadata } from 'astro';
 import type { Lang } from '@/i18n/ui';
 import { supabase } from '@/lib/supabase';
-import { tourImage } from '@/data/tour-images';
+import { tourImage, tourImages } from '@/data/tour-images';
 
 /** Contenido de un tour en un idioma. */
 export interface TourContent {
@@ -23,7 +23,8 @@ export interface PrecioDesde {
 export interface CatalogTour {
   slug: string;
   orden: number;
-  image?: ImageMetadata;
+  image: ImageMetadata; // principal (con fallback a placeholder de marca)
+  images: ImageMetadata[]; // galería (vacía si el tour no tiene fotos)
   duracion: string | null;
   incluyeTransporte: boolean;
   precioDesde: PrecioDesde | null;
@@ -75,6 +76,7 @@ function toCatalogTour(row: TourRow, precio: PrecioDesde | null): CatalogTour {
     slug: row.slug,
     orden: row.orden,
     image: tourImage(row.slug),
+    images: tourImages(row.slug),
     duracion: row.duracion,
     incluyeTransporte: row.incluye_transporte,
     precioDesde: precio,

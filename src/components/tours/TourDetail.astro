@@ -16,7 +16,8 @@ const { tour, lang } = Astro.props;
 const t = useTranslations(lang);
 const c = tour[lang];
 
-const images = tour.image ? [tour.image] : [];
+// Galería: fotos reales del tour; si no tiene, cae a la principal (placeholder).
+const images = tour.images.length > 0 ? tour.images : [tour.image];
 const backHref = `${localizePath('/', lang)}#tours`;
 const bookHref = localizePath(`/reservar/${tour.slug}`, lang);
 ---
