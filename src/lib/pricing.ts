@@ -44,6 +44,16 @@ export interface QuoteInput {
   impuestoOnline: boolean;
   tarifas: Tarifa[];
   temporadas: RangoTemporada[];
+  /** Programa elegido por el cliente. Si se omite, se toma el más barato. */
+  modalidad?: string | null;
+  /** Moneda elegida por el cliente. Si se omite, no se filtra por moneda. */
+  moneda?: Moneda;
+}
+
+/** Filtros opcionales de selección de tarifa (Step 10.0). */
+export interface OpcionesTarifa {
+  modalidad?: string | null;
+  moneda?: Moneda;
 }
 
 /** Cotización pública — lo único que puede ver el navegador. */
@@ -103,15 +113,33 @@ export function temporadaDeFecha(
 /**
  * Elige la tarifa activa por audiencia, con preferencia de temporada:
  * primero la temporada de la fecha, luego `unica`, luego cualquiera activa.
- * Entre varias modalidades del mismo grupo, toma la más barata (determinista).
+ *
+ * Si `opciones.moneda` y/o `opciones.modalidad` vienen (Step 10.0 — tours con
+ * varios programas y 2 monedas), se filtra a ESA tarifa exacta antes de aplicar
+ * la preferencia de temporada; si no existe, lanza `moneda_no_disponible` /
+ * `modalidad_no_disponible`. Si no vienen, mantiene el comportamiento anterior:
+ * entre varias modalidades toma la más barata (determinista).
  */
 export function elegirTarifa(
   tarifas: Tarifa[],
   audiencia: Audiencia,
   temporadaFecha: Temporada | null,
+  opciones: OpcionesTarifa = {},
 ): Tarifa {
-  const activas = tarifas.filter((t) => t.activo && t.audiencia === audiencia);
+  let activas = tarifas.filter((t) => t.activo && t.audiencia === audiencia);
   if (activas.length === 0) throw new PricingError('sin_tarifa_audiencia');
+
+  if (opciones.moneda) {
+    const enMoneda = activas.filter((t) => t.moneda === opciones.moneda);
+    if (enMoneda.length === 0) throw new PricingError('moneda_no_disponible');
+    activas = enMoneda;
+  }
+
+  if (opciones.modalidad != null) {
+    const enModalidad = activas.filter((t) => t.modalidad === opciones.modalidad);
+    if (enModalidad.length === 0) throw new PricingError('modalidad_no_disponible');
+    activas = enModalidad;
+  }
 
   const preferencias: Temporada[] = [];
   if (temporadaFecha) preferencias.push(temporadaFecha);
@@ -139,7 +167,10 @@ export function cotizar(input: QuoteInput): QuoteResult {
   }
 
   const temporadaFecha = temporadaDeFecha(fecha, input.temporadas);
-  const tarifa = elegirTarifa(input.tarifas, audiencia, temporadaFecha);
+  const tarifa = elegirTarifa(input.tarifas, audiencia, temporadaFecha, {
+    modalidad: input.modalidad,
+    moneda: input.moneda,
+  });
 
   if (menores > 0 && tarifa.pp_menor == null) {
     throw new PricingError('menor_no_disponible');

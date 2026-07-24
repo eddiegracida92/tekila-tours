@@ -82,6 +82,38 @@ describe('elegirTarifa', () => {
     ];
     expect(elegirTarifa(tarifas, 'extranjero', null).pp_adulto).toBe(90);
   });
+
+  it('con modalidad elegida toma ESA tarifa, no la más barata (Step 10.0)', () => {
+    const tarifas = [
+      tarifa({ modalidad: 'Encounter', pp_adulto: 119 }),
+      tarifa({ modalidad: 'Royal Connection', pp_adulto: 179 }),
+    ];
+    expect(
+      elegirTarifa(tarifas, 'extranjero', null, { modalidad: 'Royal Connection' }).pp_adulto,
+    ).toBe(179);
+  });
+
+  it('lanza modalidad_no_disponible si la modalidad pedida no existe', () => {
+    const tarifas = [tarifa({ modalidad: 'Encounter' })];
+    expect(() =>
+      elegirTarifa(tarifas, 'extranjero', null, { modalidad: 'Royal Connection' }),
+    ).toThrow(PricingError);
+  });
+
+  it('con moneda elegida filtra a esa moneda (Step 10.0)', () => {
+    const tarifas = [
+      tarifa({ modalidad: 'Encounter', moneda: 'USD', pp_adulto: 119 }),
+      tarifa({ modalidad: 'Encounter', moneda: 'MXN', pp_adulto: 1599 }),
+    ];
+    const r = elegirTarifa(tarifas, 'extranjero', null, { modalidad: 'Encounter', moneda: 'MXN' });
+    expect(r.moneda).toBe('MXN');
+    expect(r.pp_adulto).toBe(1599);
+  });
+
+  it('lanza moneda_no_disponible si no hay tarifa en esa moneda', () => {
+    const tarifas = [tarifa({ moneda: 'USD' })];
+    expect(() => elegirTarifa(tarifas, 'extranjero', null, { moneda: 'MXN' })).toThrow(PricingError);
+  });
 });
 
 describe('cotizar', () => {
@@ -178,6 +210,45 @@ describe('cotizar', () => {
     });
     expect(r.publico.temporada).toBe('alta');
     expect(r.publico.total).toBe(150);
+  });
+
+  it('cotiza el programa+moneda elegidos, no el más barato (Step 10.0)', () => {
+    const tarifas = [
+      tarifa({ modalidad: 'Encounter', moneda: 'USD', pp_adulto: 119, pp_menor: 109 }),
+      tarifa({ modalidad: 'Royal Connection', moneda: 'USD', pp_adulto: 179, pp_menor: 109 }),
+      tarifa({ modalidad: 'Encounter', moneda: 'MXN', pp_adulto: 1599, pp_menor: 1399 }),
+      tarifa({ modalidad: 'Royal Connection', moneda: 'MXN', pp_adulto: 2199, pp_menor: 1399 }),
+    ];
+    const r = cotizar({
+      fecha: '2026-07-18',
+      audiencia: 'extranjero',
+      adultos: 1,
+      menores: 0,
+      impuestoOnline: false,
+      tarifas,
+      temporadas: SIN_TEMPORADAS,
+      modalidad: 'Royal Connection',
+      moneda: 'MXN',
+    });
+    expect(r.publico.moneda).toBe('MXN');
+    expect(r.publico.total).toBe(2199);
+  });
+
+  it('sin modalidad/moneda mantiene el comportamiento anterior (más barata)', () => {
+    const tarifas = [
+      tarifa({ modalidad: 'Encounter', pp_adulto: 119 }),
+      tarifa({ modalidad: 'Isla Discovery', pp_adulto: 89 }),
+    ];
+    const r = cotizar({
+      fecha: '2026-07-18',
+      audiencia: 'extranjero',
+      adultos: 1,
+      menores: 0,
+      impuestoOnline: false,
+      tarifas,
+      temporadas: SIN_TEMPORADAS,
+    });
+    expect(r.publico.total).toBe(89);
   });
 
   it('lanza menor_no_disponible si el tour no admite menores', () => {
