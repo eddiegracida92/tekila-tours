@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { checkout, type Audiencia } from '@/lib/booking-client';
+import { checkout, type Audiencia, type Moneda } from '@/lib/booking-client';
 import type { Lang, Translate } from './types';
 
 interface Props {
@@ -11,6 +11,8 @@ interface Props {
   audiencia: Audiencia;
   adultos: number;
   menores: number;
+  modalidad?: string;
+  moneda?: Moneda;
 }
 
 /** Traduce un código de error del checkout a una clave i18n. */
@@ -38,6 +40,8 @@ export default function CheckoutForm({
   audiencia,
   adultos,
   menores,
+  modalidad,
+  moneda,
 }: Props) {
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
@@ -67,6 +71,8 @@ export default function CheckoutForm({
       cliente: { nombre: nombre.trim(), email: email.trim(), telefono: telefono.trim() },
       idioma: lang,
       marketingOptIn: optIn,
+      modalidad,
+      moneda,
     });
 
     if (res.ok) {

@@ -3,8 +3,10 @@ import { useTranslations } from '@/i18n/ui';
 import { createHold, fetchQuote, type Audiencia, type QuotePublico } from '@/lib/booking-client';
 import AvailabilityCalendar from './AvailabilityCalendar';
 import PassengerSelector from './PassengerSelector';
+import ProgramSelector from './ProgramSelector';
 import QuoteSummary from './QuoteSummary';
 import CheckoutForm from './CheckoutForm';
+import { useProgramas } from './useProgramas';
 import type { Lang } from './types';
 
 interface Props {
@@ -50,6 +52,10 @@ export default function BookingWizard({ slug, lang, maxPersonas = 20 }: Props) {
   const [menores, setMenores] = useState(0);
   const [fecha, setFecha] = useState<string | null>(null);
 
+  // Programa (modalidad) + moneda elegidos (Step 10.0). El hook carga el menú
+  // del tour y expone los valores efectivos a mandar al quote/checkout.
+  const programas = useProgramas(slug, audiencia);
+
   const [quote, setQuote] = useState<QuotePublico | null>(null);
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [quoteError, setQuoteError] = useState<string | null>(null);
@@ -69,9 +75,11 @@ export default function BookingWizard({ slug, lang, maxPersonas = 20 }: Props) {
     setExpired(false);
   }, []);
 
-  // Cotiza en vivo cuando hay fecha y cambian los parámetros.
+  // Cotiza en vivo cuando hay fecha y cambian los parámetros. Espera a que el
+  // menú de programas cargue (`ready`) para cotizar el programa/moneda elegidos
+  // y no la tarifa más barata por un instante.
   useEffect(() => {
-    if (!fecha) {
+    if (!fecha || !programas.ready) {
       setQuote(null);
       setQuoteError(null);
       return;
@@ -79,20 +87,22 @@ export default function BookingWizard({ slug, lang, maxPersonas = 20 }: Props) {
     let cancelled = false;
     setQuoteLoading(true);
     setQuoteError(null);
-    fetchQuote(slug, fecha, audiencia, adultos, menores).then((res) => {
-      if (cancelled) return;
-      if (res.ok) {
-        setQuote(res.data.cotizacion);
-      } else {
-        setQuote(null);
-        setQuoteError(t(quoteErrorKey(res.error)));
-      }
-      setQuoteLoading(false);
-    });
+    fetchQuote(slug, fecha, audiencia, adultos, menores, programas.modalidad, programas.moneda).then(
+      (res) => {
+        if (cancelled) return;
+        if (res.ok) {
+          setQuote(res.data.cotizacion);
+        } else {
+          setQuote(null);
+          setQuoteError(t(quoteErrorKey(res.error)));
+        }
+        setQuoteLoading(false);
+      },
+    );
     return () => {
       cancelled = true;
     };
-  }, [slug, fecha, audiencia, adultos, menores, t]);
+  }, [slug, fecha, audiencia, adultos, menores, programas.ready, programas.modalidad, programas.moneda, t]);
 
   // Temporizador del apartado (15 min). Al expirar, libera el estado.
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -130,6 +140,14 @@ export default function BookingWizard({ slug, lang, maxPersonas = 20 }: Props) {
   function onMenores(n: number) {
     resetHold();
     setMenores(Math.max(0, n));
+  }
+  function onMoneda(m: Parameters<typeof programas.setMoneda>[0]) {
+    resetHold();
+    programas.setMoneda(m);
+  }
+  function onModalidad(m: string) {
+    resetHold();
+    programas.setModalidad(m);
   }
 
   async function apartar() {
@@ -177,6 +195,21 @@ export default function BookingWizard({ slug, lang, maxPersonas = 20 }: Props) {
               onMenores={onMenores}
             />
           </section>
+
+          {programas.visible && (
+            <section className="bk-block">
+              <h2 className="bk-block-title">{t('booking.program')}</h2>
+              <ProgramSelector
+                t={t}
+                monedas={programas.monedas}
+                moneda={programas.moneda}
+                onMoneda={onMoneda}
+                programas={programas.programas}
+                modalidad={programas.modalidad}
+                onModalidad={onModalidad}
+              />
+            </section>
+          )}
         </div>
 
         <aside className="bk-aside">
@@ -224,6 +257,8 @@ export default function BookingWizard({ slug, lang, maxPersonas = 20 }: Props) {
                   audiencia={audiencia}
                   adultos={adultos}
                   menores={menores}
+                  modalidad={programas.modalidad}
+                  moneda={programas.moneda}
                 />
               )}
             </div>

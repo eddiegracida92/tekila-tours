@@ -3,7 +3,9 @@ import { useTranslations } from '@/i18n/ui';
 import { createHold, fetchQuote, type Audiencia, type QuotePublico } from '@/lib/booking-client';
 import AvailabilityCalendar from '@/components/booking/AvailabilityCalendar';
 import PassengerSelector from '@/components/booking/PassengerSelector';
+import ProgramSelector from '@/components/booking/ProgramSelector';
 import QuoteSummary from '@/components/booking/QuoteSummary';
+import { useProgramas } from '@/components/booking/useProgramas';
 // Opciones de cobro del punto de venta. `efectivo`/`terminal_externa` = modo A
 // (se marca pagada al instante); `online` = modo B (genera link de pago Stripe).
 const COBRO_OPCIONES = [
@@ -56,6 +58,9 @@ export default function PuntoDeVenta({ tours }: Props) {
   const [menores, setMenores] = useState(0);
   const [fecha, setFecha] = useState<string | null>(null);
 
+  // Programa (modalidad) + moneda elegidos (Step 10.0).
+  const programas = useProgramas(slug, audiencia);
+
   const [quote, setQuote] = useState<QuotePublico | null>(null);
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [quoteError, setQuoteError] = useState<string | null>(null);
@@ -86,9 +91,9 @@ export default function PuntoDeVenta({ tours }: Props) {
     setVentaError(null);
   }, []);
 
-  // Cotiza en vivo cuando hay tour y fecha.
+  // Cotiza en vivo cuando hay tour y fecha (espera el menú de programas).
   useEffect(() => {
-    if (!slug || !fecha) {
+    if (!slug || !fecha || !programas.ready) {
       setQuote(null);
       setQuoteError(null);
       return;
@@ -96,19 +101,21 @@ export default function PuntoDeVenta({ tours }: Props) {
     let cancelled = false;
     setQuoteLoading(true);
     setQuoteError(null);
-    fetchQuote(slug, fecha, audiencia, adultos, menores).then((res) => {
-      if (cancelled) return;
-      if (res.ok) setQuote(res.data.cotizacion);
-      else {
-        setQuote(null);
-        setQuoteError('No hay tarifa para esa selección.');
-      }
-      setQuoteLoading(false);
-    });
+    fetchQuote(slug, fecha, audiencia, adultos, menores, programas.modalidad, programas.moneda).then(
+      (res) => {
+        if (cancelled) return;
+        if (res.ok) setQuote(res.data.cotizacion);
+        else {
+          setQuote(null);
+          setQuoteError('No hay tarifa para esa selección.');
+        }
+        setQuoteLoading(false);
+      },
+    );
     return () => {
       cancelled = true;
     };
-  }, [slug, fecha, audiencia, adultos, menores]);
+  }, [slug, fecha, audiencia, adultos, menores, programas.ready, programas.modalidad, programas.moneda]);
 
   // Temporizador del apartado (15 min).
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -166,6 +173,8 @@ export default function PuntoDeVenta({ tours }: Props) {
       menores,
       cliente: { nombre: nombre.trim(), telefono: telefono.trim(), email: email.trim() },
     };
+    if (programas.modalidad) cuerpo.modalidad = programas.modalidad;
+    if (programas.moneda) cuerpo.moneda = programas.moneda;
     if (!online) cuerpo.metodoCobro = metodoCobro;
 
     let res: Response;
@@ -324,6 +333,27 @@ export default function PuntoDeVenta({ tours }: Props) {
                   }}
                 />
               </section>
+
+              {programas.visible && (
+                <section className="bk-block">
+                  <h2 className="bk-block-title">Programa</h2>
+                  <ProgramSelector
+                    t={t}
+                    monedas={programas.monedas}
+                    moneda={programas.moneda}
+                    onMoneda={(m) => {
+                      resetHold();
+                      programas.setMoneda(m);
+                    }}
+                    programas={programas.programas}
+                    modalidad={programas.modalidad}
+                    onModalidad={(m) => {
+                      resetHold();
+                      programas.setModalidad(m);
+                    }}
+                  />
+                </section>
+              )}
             </>
           )}
         </div>

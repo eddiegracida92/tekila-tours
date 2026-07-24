@@ -1112,6 +1112,79 @@ ol {
   margin: 0 0 var(--space-3);
 }
 
+/* ── Selector de programa + moneda (Step 10.0) ── */
+.bk-programs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.bk-programs-label {
+  display: block;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: var(--space-2);
+}
+.bk-currency-toggle {
+  display: inline-flex;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.bk-currency-opt {
+  font: inherit;
+  font-weight: var(--fw-semibold);
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-white);
+  color: var(--color-navy);
+  border: none;
+  cursor: pointer;
+}
+.bk-currency-opt + .bk-currency-opt {
+  border-left: 1px solid var(--color-border);
+}
+.bk-currency-opt.on {
+  background: var(--color-navy);
+  color: var(--color-white);
+}
+.bk-program-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.bk-program-opt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  text-align: left;
+  font: inherit;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.bk-program-opt:hover {
+  border-color: var(--color-gold);
+}
+.bk-program-opt.on {
+  border-color: var(--color-gold);
+  box-shadow: inset 0 0 0 1px var(--color-gold);
+  background: var(--color-surface);
+}
+.bk-program-name {
+  font-weight: var(--fw-semibold);
+  color: var(--color-navy);
+}
+.bk-program-price {
+  font-size: var(--fs-sm);
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
 /* ── Calendario ── */
 .bk-cal {
   background: var(--color-white);
