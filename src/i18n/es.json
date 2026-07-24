@@ -132,6 +132,13 @@
   "newsletter.err_invalid": "Revisa tu correo e inténtalo de nuevo.",
   "newsletter.err_generic": "Algo salió mal. Vuelve a intentar en un momento.",
 
+  "baja.success_title": "Te diste de baja",
+  "baja.success_msg": "Ya no recibirás correos de marketing de Tekila Tours.",
+  "baja.already_title": "Ya estabas dado de baja",
+  "baja.already_msg": "Tu correo ya no está en nuestra lista de marketing.",
+  "baja.invalid_title": "Enlace no válido",
+  "baja.invalid_msg": "No pudimos procesar la baja. El enlace puede estar incompleto o ser inválido.",
+
   "footer.rights": "Todos los derechos reservados.",
 
   "lang.es": "Español",

@@ -132,6 +132,13 @@
   "newsletter.err_invalid": "Please check your email and try again.",
   "newsletter.err_generic": "Something went wrong. Please try again in a moment.",
 
+  "baja.success_title": "You've unsubscribed",
+  "baja.success_msg": "You'll no longer receive marketing emails from Tekila Tours.",
+  "baja.already_title": "You were already unsubscribed",
+  "baja.already_msg": "Your email is no longer on our marketing list.",
+  "baja.invalid_title": "Invalid link",
+  "baja.invalid_msg": "We couldn't process the unsubscribe. The link may be incomplete or invalid.",
+
   "footer.rights": "All rights reserved.",
 
   "lang.es": "Español",

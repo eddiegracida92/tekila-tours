@@ -1,0 +1,15 @@
+---
+export const prerender = false;
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import BajaView from '@/components/site/BajaView.astro';
+import { useTranslations } from '@/i18n/ui';
+
+const lang = 'en' as const;
+const t = useTranslations(lang);
+const token = Astro.url.searchParams.get('token');
+const title = `${t('baja.success_title')} — Tekila Tours`;
+---
+
+<BaseLayout lang={lang} title={title} description={t('baja.success_msg')} path="/baja">
+  <BajaView lang={lang} token={token} />
+</BaseLayout>

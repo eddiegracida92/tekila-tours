@@ -1,0 +1,64 @@
+---
+import { useTranslations, localizePath, type Lang } from '@/i18n/ui';
+import { createAdminClient } from '@/lib/supabase';
+import Header from '@/components/site/Header.astro';
+import ContactBar from '@/components/site/ContactBar.astro';
+import Footer from '@/components/site/Footer.astro';
+
+interface Props {
+  lang: Lang;
+  token: string | null;
+}
+
+const { lang, token } = Astro.props;
+const t = useTranslations(lang);
+
+// Baja de la lista de marketing por `token_baja` (Step 9.7). Público, sin
+// sesión: el `anon` no tiene policy sobre `email_suscriptores`, así que la
+// escritura pasa por service-role. La visita GET del link ejecuta la baja
+// (one-click); repetirla es idempotente.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+type Estado = 'success' | 'already' | 'invalid';
+let estado: Estado = 'invalid';
+
+if (token && UUID_RE.test(token)) {
+  const supabase = createAdminClient();
+  const { data: sub } = await supabase
+    .from('email_suscriptores')
+    .select('id, estado')
+    .eq('token_baja', token)
+    .maybeSingle();
+
+  if (sub) {
+    if (sub.estado === 'baja') {
+      estado = 'already';
+    } else {
+      const { error } = await supabase
+        .from('email_suscriptores')
+        .update({ estado: 'baja', baja_fecha: new Date().toISOString() })
+        .eq('id', sub.id);
+      estado = error ? 'invalid' : 'success';
+    }
+  }
+}
+
+const titleKey = `baja.${estado}_title`;
+const msgKey = `baja.${estado}_msg`;
+const homeHref = localizePath('/', lang);
+const icon = estado === 'success' ? '👋' : estado === 'already' ? '✅' : '⚠️';
+---
+
+<Header lang={lang} />
+
+<main class="confirm-page">
+  <section class="confirm-card">
+    <div class="confirm-icon">{icon}</div>
+    <h1>{t(titleKey)}</h1>
+    <p>{t(msgKey)}</p>
+    <a href={homeHref} class="btn-primary confirm-btn">{t('confirm.back_home')}</a>
+  </section>
+</main>
+
+<ContactBar />
+<Footer lang={lang} />
