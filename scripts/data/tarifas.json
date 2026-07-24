@@ -1,0 +1,71 @@
+{
+  "_nota": "Step 10.1 — precios PÚBLICOS (PP) extraídos de las fichas técnicas de fuentes/tours-all. Formato compacto: cada 'programa' (modalidad) se expande en el import a filas de tarifas por audiencia (nacional+extranjero, mismo precio salvo que se indique) y por moneda (USD/MXN si viene). DECISIÓN: el PR (costo) NO está en las fuentes → el import pone pr = pp (margen 0); el owner corrige el PR luego por el panel. Los impuestos de muelle/entrada NO se incluyen (Step 11). Verificar cada número contra el PDF antes de importar.",
+  "tours": [
+    {
+      "slug": "dd-isla-mujeres",
+      "programas": [
+        { "modalidad": "Isla Discovery", "usd_adulto": 89, "usd_menor": 79, "mxn_adulto": 999, "mxn_menor": 799 },
+        { "modalidad": "Discovery Species", "usd_adulto": 129, "usd_menor": 109, "mxn_adulto": 1599, "mxn_menor": 1399 },
+        { "modalidad": "Dolphin Encounter", "usd_adulto": 119, "usd_menor": 109, "mxn_adulto": 1599, "mxn_menor": 1399 },
+        { "modalidad": "Dolphin Connection", "usd_adulto": 149, "usd_menor": 109, "mxn_adulto": 1899, "mxn_menor": 1399 },
+        { "modalidad": "Royal Connection", "usd_adulto": 179, "usd_menor": 109, "mxn_adulto": 2199, "mxn_menor": 1399 }
+      ]
+    },
+    {
+      "slug": "garrafon",
+      "programas": [
+        { "modalidad": "Royal Garrafón", "usd_adulto": 99, "usd_menor": 79, "mxn_adulto": 1399, "mxn_menor": 999 },
+        { "modalidad": "Garrafón VIP", "usd_adulto": 119, "usd_menor": 89, "mxn_adulto": 1599, "mxn_menor": 999 }
+      ]
+    },
+    {
+      "slug": "dd-cozumel",
+      "programas": [
+        { "modalidad": "Sea Lion Discovery", "usd_adulto": 79, "usd_menor": 79, "mxn_adulto": 799, "mxn_menor": 799 },
+        { "modalidad": "Manatee Encounter", "usd_adulto": 79, "usd_menor": 79, "mxn_adulto": 799, "mxn_menor": 799 },
+        { "modalidad": "Dolphin Encounter", "usd_adulto": 109, "usd_menor": 109, "mxn_adulto": 1399, "mxn_menor": 1299 },
+        { "modalidad": "Dolphin Connection", "usd_adulto": 139, "usd_menor": 109, "mxn_adulto": 1799, "mxn_menor": 1299 },
+        { "modalidad": "Royal Connection", "usd_adulto": 169, "usd_menor": 109, "mxn_adulto": 2199, "mxn_menor": 1299 }
+      ]
+    },
+    {
+      "slug": "dd-maroma-pdc",
+      "programas": [
+        { "modalidad": "Dolphin Encounter", "usd_adulto": 99, "usd_menor": 99, "mxn_adulto": 1399, "mxn_menor": 1299 },
+        { "modalidad": "Dolphin Connection", "usd_adulto": 139, "usd_menor": 99, "mxn_adulto": 1799, "mxn_menor": 1299 },
+        { "modalidad": "Royal Connection", "usd_adulto": 169, "usd_menor": 99, "mxn_adulto": 2199, "mxn_menor": 1299 }
+      ]
+    },
+    {
+      "slug": "dd-puerto-aventuras",
+      "programas": [
+        { "modalidad": "Dolphin Encounter", "usd_adulto": 109, "usd_menor": 109, "mxn_adulto": 1499, "mxn_menor": 1299 },
+        { "modalidad": "Dolphin Connection", "usd_adulto": 139, "usd_menor": 109, "mxn_adulto": 1899, "mxn_menor": 1299 },
+        { "modalidad": "Royal Connection", "usd_adulto": 169, "usd_menor": 109, "mxn_adulto": 2299, "mxn_menor": 1299 }
+      ]
+    },
+    {
+      "slug": "isla-mujeres-pleasure",
+      "programas": [
+        { "modalidad": "Básico", "usd_adulto": 89, "usd_menor": 59, "mxn_adulto": 1299, "mxn_menor": 999 },
+        { "modalidad": "VIP", "usd_adulto": 109, "usd_menor": 79, "mxn_adulto": 1499, "mxn_menor": 999 }
+      ]
+    },
+    {
+      "slug": "columbus",
+      "_nota_tour": "Cena crucero, edad mínima 14 años → sin tarifa de menor (usd_menor/mxn_menor = null). Existe además 'precio pareja' $219 USD/$3699 MXN (paquete 2 personas) que NO se modela aquí; se menciona en la descripción.",
+      "programas": [
+        { "modalidad": "Cena Carne o Vegetariana", "usd_adulto": 99, "usd_menor": null, "mxn_adulto": 1599, "mxn_menor": null },
+        { "modalidad": "Cena Brocheta de Camarón", "usd_adulto": 109, "usd_menor": null, "mxn_adulto": 1699, "mxn_menor": null },
+        { "modalidad": "Cena Langosta o Surf & Turf", "usd_adulto": 119, "usd_menor": null, "mxn_adulto": 1999, "mxn_menor": null }
+      ]
+    },
+    {
+      "slug": "jungle-tour",
+      "_nota_tour": "Lista Tekila da PP en USD (32/22). No hay precio MXN en las fuentes → solo USD (el toggle de moneda no aplicará). Muelle 20USD/250MXN NO incluido (Step 11).",
+      "programas": [
+        { "modalidad": "Adventure", "usd_adulto": 32, "usd_menor": 22, "mxn_adulto": null, "mxn_menor": null }
+      ]
+    }
+  ]
+}
