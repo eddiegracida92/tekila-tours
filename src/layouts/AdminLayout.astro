@@ -4,7 +4,7 @@ import '@/styles/tokens.css';
 interface Props {
   title: string;
   /** Sección activa en el nav (para resaltar). */
-  active?: 'dashboard' | 'tours' | 'temporadas' | 'reservas' | 'vendedores';
+  active?: 'dashboard' | 'tours' | 'temporadas' | 'reservas' | 'vendedores' | 'campanas';
 }
 
 const { title, active = 'dashboard' } = Astro.props;
@@ -19,6 +19,7 @@ const nav = [
   { key: 'temporadas', label: 'Temporadas', href: '/admin/temporadas', ready: true, ownerOnly: false },
   { key: 'reservas', label: 'Reservas', href: '/admin/reservas', ready: true, ownerOnly: false },
   { key: 'vendedores', label: 'Vendedores', href: '/admin/vendedores', ready: true, ownerOnly: true },
+  { key: 'campanas', label: 'Campañas', href: '/admin/campanas', ready: true, ownerOnly: true },
 ].filter((item) => !item.ownerOnly || esOwnerRol);
 ---
 

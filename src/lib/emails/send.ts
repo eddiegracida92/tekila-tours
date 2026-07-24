@@ -9,6 +9,7 @@
 
 import { Resend } from 'resend';
 import { plantillaConfirmacion, type DatosConfirmacion } from '@/lib/emails/confirmacion';
+import { plantillaCampana, type DatosCampana } from '@/lib/emails/campana';
 
 let _resend: Resend | null = null;
 
@@ -35,6 +36,27 @@ export async function enviarConfirmacion(
   datos: DatosConfirmacion,
 ): Promise<EnvioResult> {
   const { subject, html, text } = plantillaConfirmacion(datos);
+  try {
+    const { data, error } = await getResend().emails.send({
+      from: remitente(),
+      to: destinatario,
+      subject,
+      html,
+      text,
+    });
+    if (error) return { ok: false, error: error.message ?? 'resend_error' };
+    return { ok: true, id: data?.id ?? '' };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'resend_exception' };
+  }
+}
+
+/** Envía un correo de campaña (marketing, Step 9.7.3) a un destinatario. */
+export async function enviarCampana(
+  destinatario: string,
+  datos: DatosCampana,
+): Promise<EnvioResult> {
+  const { subject, html, text } = plantillaCampana(datos);
   try {
     const { data, error } = await getResend().emails.send({
       from: remitente(),

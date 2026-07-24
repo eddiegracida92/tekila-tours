@@ -1,0 +1,246 @@
+---
+export const prerender = false;
+
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import { createServerSupabase, esOwner } from '@/lib/auth';
+import { parseCampanaForm, construirBajaUrl } from '@/lib/admin/campanas';
+import { enviarCampana } from '@/lib/emails/send';
+
+const admin = Astro.locals.admin!;
+
+// Enviar correo a clientes reales es de alto impacto/reputación: solo el owner.
+// El middleware ya excluyó a los vendedores; aquí además exigimos owner.
+if (!esOwner(admin)) {
+  return new Response('No autorizado', { status: 403 });
+}
+
+const supabase = createServerSupabase(Astro.request, Astro.cookies);
+const origin = Astro.url.origin;
+
+// Estado de la última acción (para el flash) + valores para repoblar el form.
+let aviso: string | null = null;
+let error: string | null = null;
+let form = { asunto: '', cuerpo: '', idioma: 'es' as 'es' | 'en' };
+
+if (Astro.request.method === 'POST') {
+  const fd = await Astro.request.formData();
+  const accion = fd.get('accion');
+  const parsed = parseCampanaForm(fd);
+
+  if (!parsed.success) {
+    form = {
+      asunto: String(fd.get('asunto') ?? ''),
+      cuerpo: String(fd.get('cuerpo') ?? ''),
+      idioma: fd.get('idioma') === 'en' ? 'en' : 'es',
+    };
+    error = parsed.error.issues[0]?.message ?? 'Datos inválidos.';
+  } else {
+    const { asunto, cuerpo, idioma } = parsed.data;
+    form = { asunto, cuerpo, idioma };
+
+    if (accion === 'prueba') {
+      // Prueba: se envía SOLO al correo del owner. Para el link de baja se usa
+      // el token del owner si está suscrito; si no, un token de muestra (el
+      // link mostrará "enlace no válido", suficiente para previsualizar).
+      const { data: propio } = await supabase
+        .from('email_suscriptores')
+        .select('token_baja, idioma')
+        .eq('email', admin.email)
+        .maybeSingle();
+      const token = propio?.token_baja ?? '00000000-0000-0000-0000-000000000000';
+      const bajaUrl = construirBajaUrl(origin, idioma, token);
+      const res = await enviarCampana(admin.email, { asunto, cuerpo, idioma, bajaUrl });
+      aviso = res.ok
+        ? `Correo de prueba enviado a ${admin.email}.`
+        : null;
+      if (!res.ok) error = `No se pudo enviar la prueba: ${res.error}`;
+    } else if (accion === 'enviar') {
+      // Envío real al segmento: solo suscritos CON consentimiento del idioma
+      // elegido (RLS `email_suscriptores_admin_read` = is_admin, owner pasa).
+      const { data: destinatarios } = await supabase
+        .from('email_suscriptores')
+        .select('email, idioma, token_baja')
+        .eq('estado', 'suscrito')
+        .eq('consentimiento', true)
+        .eq('idioma', idioma);
+
+      const lista = destinatarios ?? [];
+      let ok = 0;
+      let fail = 0;
+      for (const d of lista) {
+        const bajaUrl = construirBajaUrl(origin, d.idioma === 'en' ? 'en' : 'es', d.token_baja);
+        const res = await enviarCampana(d.email, { asunto, cuerpo, idioma, bajaUrl });
+        if (res.ok) ok++;
+        else fail++;
+      }
+      if (lista.length === 0) {
+        error = `No hay suscriptores con consentimiento en "${idioma}".`;
+      } else {
+        aviso = `Campaña enviada: ${ok} correo(s) enviados${fail ? `, ${fail} fallidos` : ''}.`;
+        form = { asunto: '', cuerpo: '', idioma };
+      }
+    }
+  }
+}
+
+// Conteo de suscriptores activos por idioma (para orientar al owner).
+const { data: subs } = await supabase
+  .from('email_suscriptores')
+  .select('idioma')
+  .eq('estado', 'suscrito')
+  .eq('consentimiento', true);
+const countEs = (subs ?? []).filter((s) => s.idioma === 'es').length;
+const countEn = (subs ?? []).filter((s) => s.idioma === 'en').length;
+---
+
+<AdminLayout title="Campañas" active="campanas">
+  <div class="head">
+    <div>
+      <p class="count">
+        Lista de marketing: <strong>{countEs}</strong> en español · <strong>{countEn}</strong> en inglés
+      </p>
+      <p class="desc">
+        Envía promociones por correo a tus suscriptores. Cada correo incluye el link de baja
+        obligatorio. El segmento se elige por idioma; solo se envía a quien dio consentimiento.
+      </p>
+    </div>
+  </div>
+
+  {aviso && <p class="flash ok">{aviso}</p>}
+  {error && <p class="flash err">{error}</p>}
+
+  <form method="POST" class="campana-form">
+    <label class="field">
+      <span>Idioma del segmento</span>
+      <select name="idioma">
+        <option value="es" selected={form.idioma === 'es'}>Español ({countEs} suscriptores)</option>
+        <option value="en" selected={form.idioma === 'en'}>Inglés ({countEn} suscriptores)</option>
+      </select>
+    </label>
+
+    <label class="field">
+      <span>Asunto</span>
+      <input type="text" name="asunto" maxlength="200" required value={form.asunto} placeholder="Ofertas de verano 🌴" />
+    </label>
+
+    <label class="field">
+      <span>Cuerpo del correo</span>
+      <textarea name="cuerpo" rows="10" maxlength="5000" required placeholder="Escribe tu mensaje. Los saltos de línea se respetan.">{form.cuerpo}</textarea>
+      <em class="hint">Texto plano. Se envuelve con la marca Tekila Tours y el link de baja al pie.</em>
+    </label>
+
+    <div class="actions">
+      <button type="submit" name="accion" value="prueba" class="btn-secondary">
+        Enviar prueba a mi correo
+      </button>
+      <button type="submit" name="accion" value="enviar" class="btn-primary"
+        onclick="return confirm('¿Enviar esta campaña a toda la lista del idioma elegido?');">
+        Enviar a la lista
+      </button>
+    </div>
+    <p class="nota">
+      La prueba se envía a <strong>{admin.email}</strong>. Sin un dominio verificado en Resend,
+      los envíos solo llegan a la cuenta de Resend (se configura en el deploy).
+    </p>
+  </form>
+</AdminLayout>
+
+<style>
+  .head {
+    margin-bottom: var(--space-6);
+  }
+  .count {
+    font-size: var(--fs-body);
+    margin: 0 0 var(--space-2);
+  }
+  .desc {
+    font-size: var(--fs-sm);
+    color: var(--color-muted);
+    margin: 0;
+    max-width: 640px;
+  }
+  .flash {
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius);
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
+    margin: 0 0 var(--space-4);
+  }
+  .flash.ok {
+    background: #e6f5f0;
+    color: var(--color-success);
+  }
+  .flash.err {
+    background: #fbeae7;
+    color: var(--color-destructive);
+  }
+  .campana-form {
+    max-width: 640px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .field > span {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
+  }
+  .field input,
+  .field select,
+  .field textarea {
+    font: inherit;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-white);
+    color: var(--color-text);
+  }
+  .field textarea {
+    resize: vertical;
+  }
+  .hint {
+    font-style: normal;
+    font-size: var(--fs-xs);
+    color: var(--color-muted);
+  }
+  .actions {
+    display: flex;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+  }
+  .btn-primary,
+  .btn-secondary {
+    font: inherit;
+    font-weight: var(--fw-semibold);
+    font-size: var(--fs-sm);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius);
+    cursor: pointer;
+    border: 1px solid var(--color-border);
+  }
+  .btn-primary {
+    background: var(--color-cta);
+    color: var(--color-white);
+    border-color: var(--color-cta);
+  }
+  .btn-primary:hover {
+    background: var(--color-coral-dim);
+  }
+  .btn-secondary {
+    background: var(--color-surface);
+    color: var(--color-navy);
+  }
+  .btn-secondary:hover {
+    background: var(--color-border);
+  }
+  .nota {
+    font-size: var(--fs-xs);
+    color: var(--color-muted);
+    margin: 0;
+    max-width: 640px;
+  }
+</style>
