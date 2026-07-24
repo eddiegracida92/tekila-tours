@@ -26,6 +26,14 @@ import { z } from 'zod';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DRY = process.argv.includes('--dry-run');
 
+/** Lee un flag `--x valor` del argv (o un default). */
+function arg(flag, def) {
+  const i = process.argv.indexOf(flag);
+  return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : def;
+}
+const TOURS_FILE = arg('--tours', 'tours.json');
+const TARIFAS_FILE = arg('--tarifas', 'tarifas.json');
+
 // ---------- Validación de los JSON de entrada ----------
 const num = z.number().nullable();
 const ProgramaSchema = z.object({
@@ -153,7 +161,8 @@ function filasTarifa(tourId, programas) {
 
 // ---------- Main ----------
 async function main() {
-  const toursIn = leer('tours.json').map((t, i) => {
+  console.log(`Archivos: ${TOURS_FILE} + ${TARIFAS_FILE}`);
+  const toursIn = leer(TOURS_FILE).map((t, i) => {
     const r = TourSchema.safeParse(t);
     if (!r.success) {
       console.error(`✖ tours.json[${i}] (${t.slug ?? '?'}) inválido:`, r.error.flatten().fieldErrors);
@@ -161,7 +170,7 @@ async function main() {
     }
     return r.data;
   });
-  const tarifasIn = leer('tarifas.json').map((t, i) => {
+  const tarifasIn = leer(TARIFAS_FILE).map((t, i) => {
     const r = TarifasTourSchema.safeParse(t);
     if (!r.success) {
       console.error(`✖ tarifas.json[${i}] (${t.slug ?? '?'}) inválido:`, r.error.flatten().fieldErrors);

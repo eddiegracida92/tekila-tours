@@ -1,0 +1,63 @@
+{
+  "_nota": "Step 10.2 — tours STAGED (activo:false). PP en USD tomado de las listas de precios (Tekila retail / Adriana MTZ). PR=PP por ahora (el owner corrige en el panel; el PR real de muchos existe en la lista Adriana). Variantes agrupadas en programas. Se dejaron FUERA a propósito (requieren decisión humana): variantes de operador mayab/kiichpam y nacional/extranjero, entradas solo-parque, paquetes 2x, buceo/snorkel add-ons, Ek Balam/Kukulkán (solo domingos). Xcaret group: precio de temporada Alta como 'unica' (owner define Baja/Alta luego).",
+  "tours": [
+    { "slug": "xcaret-plus", "programas": [ { "modalidad": "Día completo", "usd_adulto": 225, "usd_menor": 169, "mxn_adulto": null, "mxn_menor": null } ] },
+    { "slug": "xel-ha", "programas": [ { "modalidad": "Todo incluido", "usd_adulto": 175, "usd_menor": 132, "mxn_adulto": null, "mxn_menor": null } ] },
+    { "slug": "xplor", "programas": [ { "modalidad": "Día", "usd_adulto": 205, "usd_menor": 154, "mxn_adulto": null, "mxn_menor": null } ] },
+    { "slug": "xplor-fuego", "programas": [ { "modalidad": "Tarde-noche", "usd_adulto": 175, "usd_menor": 132, "mxn_adulto": null, "mxn_menor": null } ] },
+    { "slug": "xenotes", "programas": [ { "modalidad": "Tour de cenotes", "usd_adulto": 159, "usd_menor": 119, "mxn_adulto": null, "mxn_menor": null } ] },
+    { "slug": "xoximilco", "programas": [ { "modalidad": "Fiesta mexicana", "usd_adulto": 155, "usd_menor": 117, "mxn_adulto": null, "mxn_menor": null } ] },
+    { "slug": "xenses", "programas": [ { "modalidad": "Parque de los sentidos", "usd_adulto": 125, "usd_menor": 94, "mxn_adulto": null, "mxn_menor": null } ] },
+    { "slug": "catamaran-xcaret", "programas": [
+      { "modalidad": "Light", "usd_adulto": 119, "usd_menor": 90, "mxn_adulto": null, "mxn_menor": null },
+      { "modalidad": "Prime", "usd_adulto": 169, "usd_menor": 127, "mxn_adulto": null, "mxn_menor": null }
+    ] },
+    { "slug": "chichen-itza", "programas": [
+      { "modalidad": "Clásico", "usd_adulto": 64, "usd_menor": 56, "mxn_adulto": null, "mxn_menor": null },
+      { "modalidad": "Deluxe", "usd_adulto": 85, "usd_menor": 78, "mxn_adulto": null, "mxn_menor": null },
+      { "modalidad": "Plus", "usd_adulto": 68, "usd_menor": 56, "mxn_adulto": null, "mxn_menor": null },
+      { "modalidad": "Diamante", "usd_adulto": 94, "usd_menor": 87, "mxn_adulto": null, "mxn_menor": null },
+      { "modalidad": "2 Cenotes (Ikkil + Hubiku)", "usd_adulto": 89, "usd_menor": 80, "mxn_adulto": null, "mxn_menor": null }
+    ] },
+    { "slug": "tulum-coba-cenotes", "programas": [
+      { "modalidad": "4x1 Clásico", "usd_adulto": 52, "usd_menor": 49, "mxn_adulto": null, "mxn_menor": null },
+      { "modalidad": "4x1 Deluxe", "usd_adulto": 59, "usd_menor": 55, "mxn_adulto": null, "mxn_menor": null },
+      { "modalidad": "5x1 Clásico", "usd_adulto": 62, "usd_menor": 57, "mxn_adulto": null, "mxn_menor": null },
+      { "modalidad": "5x1 Deluxe", "usd_adulto": 79, "usd_menor": 74, "mxn_adulto": null, "mxn_menor": null }
+    ] },
+    { "slug": "cozumel-catamaran", "programas": [
+      { "modalidad": "El Cielo (lancha)", "usd_adulto": 110, "usd_menor": 107, "mxn_adulto": null, "mxn_menor": null },
+      { "modalidad": "Catamarán con transporte", "usd_adulto": 124, "usd_menor": 109, "mxn_adulto": null, "mxn_menor": null },
+      { "modalidad": "Económico", "usd_adulto": 66, "usd_menor": 66, "mxn_adulto": null, "mxn_menor": null },
+      { "modalidad": "Combo Cielo + Clear Boat", "usd_adulto": 139, "usd_menor": 133, "mxn_adulto": null, "mxn_menor": null },
+      { "modalidad": "Submarino", "usd_adulto": 178, "usd_menor": 160, "mxn_adulto": null, "mxn_menor": null }
+    ] },
+    { "slug": "bacalar", "programas": [
+      { "modalidad": "Club de Playa y Kayak", "usd_adulto": 75, "usd_menor": 69, "mxn_adulto": null, "mxn_menor": null },
+      { "modalidad": "Plus + Pontón", "usd_adulto": 80, "usd_menor": 75, "mxn_adulto": null, "mxn_menor": null },
+      { "modalidad": "Rápidos", "usd_adulto": 80, "usd_menor": 75, "mxn_adulto": null, "mxn_menor": null },
+      { "modalidad": "Económico", "usd_adulto": 48, "usd_menor": 45, "mxn_adulto": null, "mxn_menor": null }
+    ] },
+    { "slug": "holbox", "programas": [
+      { "modalidad": "Económico", "usd_adulto": 59, "usd_menor": 59, "mxn_adulto": null, "mxn_menor": null },
+      { "modalidad": "Ferry + Carrito de Golf", "usd_adulto": 95, "usd_menor": 95, "mxn_adulto": null, "mxn_menor": null },
+      { "modalidad": "Plus + Cenote", "usd_adulto": 86, "usd_menor": 80, "mxn_adulto": null, "mxn_menor": null }
+    ] },
+    { "slug": "isla-contoy", "programas": [ { "modalidad": "Tour a Isla Contoy", "usd_adulto": 105, "usd_menor": 93, "mxn_adulto": null, "mxn_menor": null } ] },
+    { "slug": "las-coloradas-rio-lagartos", "programas": [ { "modalidad": "Tour completo", "usd_adulto": 78, "usd_menor": 72, "mxn_adulto": null, "mxn_menor": null } ] },
+    { "slug": "sian-kaan", "programas": [ { "modalidad": "Lancha y van", "usd_adulto": 113, "usd_menor": 107, "mxn_adulto": null, "mxn_menor": null } ] },
+    { "slug": "capitan-hook", "programas": [
+      { "modalidad": "Cena Pollo", "usd_adulto": 94, "usd_menor": 81, "mxn_adulto": null, "mxn_menor": null },
+      { "modalidad": "Cena Vegetariana", "usd_adulto": 94, "usd_menor": 81, "mxn_adulto": null, "mxn_menor": null },
+      { "modalidad": "Cena Carne", "usd_adulto": 104, "usd_menor": 89, "mxn_adulto": null, "mxn_menor": null },
+      { "modalidad": "Cola de Langosta", "usd_adulto": 114, "usd_menor": 98, "mxn_adulto": null, "mxn_menor": null },
+      { "modalidad": "Mar y Tierra", "usd_adulto": 124, "usd_menor": 106, "mxn_adulto": null, "mxn_menor": null }
+    ] },
+    { "slug": "isla-mujeres-sailing", "programas": [ { "modalidad": "Sailing", "usd_adulto": 39, "usd_menor": 29, "mxn_adulto": null, "mxn_menor": null } ] },
+    { "slug": "colores-cancun", "programas": [ { "modalidad": "Lancha transparente", "usd_adulto": 41, "usd_menor": 41, "mxn_adulto": null, "mxn_menor": null } ] },
+    { "slug": "atv-cenote-tirolesa", "programas": [
+      { "modalidad": "Compartida (Cancún y Pto. Morelos)", "usd_adulto": 39, "usd_menor": 32, "mxn_adulto": null, "mxn_menor": null },
+      { "modalidad": "Individual (Cancún y Pto. Morelos)", "usd_adulto": 49, "usd_menor": null, "mxn_adulto": null, "mxn_menor": null }
+    ] }
+  ]
+}
