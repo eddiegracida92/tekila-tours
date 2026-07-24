@@ -30,6 +30,9 @@ export interface DatosVentaVendedor {
   menores: number;
   cliente: { nombre: string; telefono: string; email: string };
   metodoCobro: 'efectivo' | 'terminal_externa' | 'online';
+  /** Programa y moneda elegidos (Step 10.0). Opcionales por compatibilidad. */
+  modalidad?: string | null;
+  moneda?: 'USD' | 'MXN';
 }
 
 export type PrepararResultado =
@@ -41,7 +44,7 @@ export async function prepararReservaVendedor(
   vendedorId: string,
   datos: DatosVentaVendedor,
 ): Promise<PrepararResultado> {
-  const { slug, holdId, fecha, audiencia, adultos, menores, cliente, metodoCobro } = datos;
+  const { slug, holdId, fecha, audiencia, adultos, menores, cliente, metodoCobro, modalidad, moneda } = datos;
   const personas = adultos + menores;
 
   // 1) Tour.
@@ -88,6 +91,8 @@ export async function prepararReservaVendedor(
       impuestoOnline: tour.impuesto_online,
       tarifas: (tarifasRes.data ?? []) as unknown as Tarifa[],
       temporadas: (temporadasRes.data ?? []) as unknown as RangoTemporada[],
+      modalidad,
+      moneda,
     }));
   } catch (err) {
     if (err instanceof PricingError) return { ok: false, error: err.code, status: 422 };
@@ -116,6 +121,7 @@ export async function prepararReservaVendedor(
       audiencia,
       adultos,
       menores,
+      modalidad: modalidad ?? null,
       moneda: publico.moneda,
       subtotal: publico.subtotal,
       impuestos: publico.impuestos,

@@ -14,6 +14,10 @@ const QuoteSchema = z.object({
   audiencia: z.enum(['nacional', 'extranjero']),
   adultos: z.number().int().min(1).max(50),
   menores: z.number().int().min(0).max(50),
+  // Programa y moneda elegidos (Step 10.0). Opcionales: sin ellos, el motor
+  // toma la tarifa más barata (compatibilidad con tours de tarifa única).
+  modalidad: z.string().max(120).optional(),
+  moneda: z.enum(['USD', 'MXN']).optional(),
 });
 
 const TARIFA_COLUMNS =
@@ -32,7 +36,7 @@ export const POST: APIRoute = async ({ request }) => {
   if (!parsed.success) {
     return errorJson('payload_invalido', 422, parsed.error.flatten());
   }
-  const { slug, fecha, audiencia, adultos, menores } = parsed.data;
+  const { slug, fecha, audiencia, adultos, menores, modalidad, moneda } = parsed.data;
 
   const supabase = createAdminClient();
 
@@ -65,6 +69,8 @@ export const POST: APIRoute = async ({ request }) => {
       impuestoOnline: tour.impuesto_online,
       tarifas: (tarifasRes.data ?? []) as unknown as Tarifa[],
       temporadas: (temporadasRes.data ?? []) as unknown as RangoTemporada[],
+      modalidad,
+      moneda,
     });
     // Solo `publico` viaja al cliente; el margen/PR (`interno`) se queda aquí.
     return json({ ok: true, cotizacion: publico }, 200);

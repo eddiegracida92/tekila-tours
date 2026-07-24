@@ -26,6 +26,9 @@ const CheckoutSchema = z.object({
   idioma: z.enum(['es', 'en']).default('es'),
   zonaPickup: z.string().max(160).optional(),
   marketingOptIn: z.boolean().default(false),
+  // Programa y moneda elegidos (Step 10.0). Opcionales por compatibilidad.
+  modalidad: z.string().max(120).optional(),
+  moneda: z.enum(['USD', 'MXN']).optional(),
 });
 
 const TARIFA_COLUMNS =
@@ -44,7 +47,7 @@ export const POST: APIRoute = async ({ request }) => {
   if (!parsed.success) {
     return errorJson('payload_invalido', 422, parsed.error.flatten());
   }
-  const { slug, holdId, fecha, audiencia, adultos, menores, cliente, idioma, zonaPickup, marketingOptIn } =
+  const { slug, holdId, fecha, audiencia, adultos, menores, cliente, idioma, zonaPickup, marketingOptIn, modalidad, moneda } =
     parsed.data;
   const personas = adultos + menores;
 
@@ -99,6 +102,8 @@ export const POST: APIRoute = async ({ request }) => {
       impuestoOnline: tour.impuesto_online,
       tarifas: (tarifasRes.data ?? []) as unknown as Tarifa[],
       temporadas: (temporadasRes.data ?? []) as unknown as RangoTemporada[],
+      modalidad,
+      moneda,
     }));
   } catch (err) {
     if (err instanceof PricingError) return errorJson(err.code, 422);
@@ -116,6 +121,7 @@ export const POST: APIRoute = async ({ request }) => {
       adultos,
       menores,
       zona_pickup: zonaPickup ?? null,
+      modalidad: modalidad ?? null,
       moneda: publico.moneda,
       subtotal: publico.subtotal,
       impuestos: publico.impuestos,

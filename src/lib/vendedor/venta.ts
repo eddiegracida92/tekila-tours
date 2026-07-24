@@ -39,6 +39,9 @@ const VENTA_BASE = {
     })
     // Normaliza ausentes a '' para satisfacer las columnas NOT NULL.
     .transform((c) => ({ nombre: c.nombre, telefono: c.telefono ?? '', email: c.email ?? '' })),
+  // Programa y moneda elegidos (Step 10.0). Opcionales por compatibilidad.
+  modalidad: z.string().max(120).optional(),
+  moneda: z.enum(['USD', 'MXN']).optional(),
 } as const;
 
 /** Modo A (efectivo/terminal): el vendedor elige el método de cobro presencial. */
